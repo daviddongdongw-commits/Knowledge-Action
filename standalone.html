@@ -1,0 +1,2305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>知行 · 读书到行动</title>
+  <style>
+/* ===== 全局重置 ===== */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-primary: #4f46e5;
+  --color-primary-light: #eef2ff;
+  --color-primary-hover: #4338ca;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-border-light: #f0f1f3;
+  --color-success: #10b981;
+  --color-success-light: #ecfdf5;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fffbeb;
+  --color-danger: #ef4444;
+  --color-danger-light: #fef2f2;
+  --color-info: #3b82f6;
+  --color-info-light: #eff6ff;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --transition: 0.2s ease;
+  --sidebar-width: 220px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== 侧边导航 ===== */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 20px 20px;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.nav-list {
+  list-style: none;
+  padding: 8px 12px;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--transition);
+  margin-bottom: 2px;
+  user-select: none;
+}
+
+.nav-item:hover {
+  background: var(--color-border-light);
+  color: var(--color-text);
+}
+
+.nav-item.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.stats-mini {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.8;
+}
+
+/* ===== 主内容区 ===== */
+.main-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  padding: 32px 40px;
+  max-width: calc(100vw - var(--sidebar-width));
+}
+
+.view {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.view.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.view-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ===== 按钮 ===== */
+.btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background: var(--color-border-light);
+  color: var(--color-text-secondary);
+}
+
+.btn-secondary:hover {
+  background: var(--color-border);
+}
+
+.btn-danger {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.btn-danger:hover {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+/* ===== 书架 ===== */
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.book-card {
+  position: relative;
+  height: 300px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+  transition: all var(--transition);
+  cursor: pointer;
+  background-size: cover;
+  background-position: center top;
+  display: flex;
+  align-items: flex-end;
+}
+
+.book-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* 无封面时的纯色卡片居中显示首字 */
+.book-card:not(.book-card-has-cover) {
+  align-items: center;
+  justify-content: center;
+}
+
+/* 底部半透明遮罩层 */
+.book-overlay {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 12px 14px;
+  transition: background var(--transition);
+}
+
+.book-card:hover .book-overlay {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.book-cover-fallback-char {
+  font-size: 48px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.book-info {
+  padding: 0;
+}
+
+.book-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.book-author {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.book-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.book-progress-bar {
+  flex: 1;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.book-progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.book-progress-text {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.book-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.book-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted);
+}
+
+.book-empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.3;
+}
+
+/* ===== 笔记 ===== */
+.filter-bar {
+  margin-bottom: 16px;
+}
+
+.filter-select {
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  outline: none;
+}
+
+.filter-select:focus {
+  border-color: var(--color-primary);
+}
+
+.note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.note-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-light);
+  padding: 18px 20px;
+  transition: all var(--transition);
+}
+
+.note-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.note-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.note-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.note-book-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.note-type-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.note-type-tag.type-quote {
+  background: var(--color-info-light);
+  color: var(--color-info);
+}
+
+.note-type-tag.type-insight {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.note-type-tag.type-summary {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.note-date {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.note-content {
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.note-content .quote-mark {
+  color: var(--color-text-muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.note-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.note-action-link {
+  font-size: 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.note-action-link:hover {
+  text-decoration: underline;
+}
+
+.note-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.note-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted);
+}
+
+/* ===== 行动看板 ===== */
+.action-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.action-column {
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  min-height: 400px;
+}
+
+.column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--color-border-light);
+}
+
+.column-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.column-count {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.action-column[data-status="pending"] .column-header {
+  border-color: var(--color-info);
+}
+.action-column[data-status="doing"] .column-header {
+  border-color: var(--color-warning);
+}
+.action-column[data-status="done"] .column-header {
+  border-color: var(--color-success);
+}
+
+.column-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-light);
+  padding: 14px 16px;
+  transition: all var(--transition);
+  cursor: grab;
+}
+
+.action-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+}
+
+.action-card.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.action-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.action-priority {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.action-priority.priority-high {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.action-priority.priority-medium {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.action-priority.priority-low {
+  background: var(--color-info-light);
+  color: var(--color-info);
+}
+
+.action-card-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.action-icon-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all var(--transition);
+  font-size: 14px;
+}
+
+.action-icon-btn:hover {
+  background: var(--color-border-light);
+  color: var(--color-text);
+}
+
+.action-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.action-desc {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.action-source {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.action-source-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.action-empty-col {
+  text-align: center;
+  padding: 40px 12px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+/* ===== 仪表盘 ===== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-light);
+  padding: 24px;
+  text-align: center;
+  transition: all var(--transition);
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+
+.stat-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.stat-icon-book { background: var(--color-primary-light); color: var(--color-primary); }
+.stat-icon-note { background: var(--color-info-light); color: var(--color-info); }
+.stat-icon-action { background: var(--color-warning-light); color: var(--color-warning); }
+.stat-icon-done { background: var(--color-success-light); color: var(--color-success); }
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.dashboard-section {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-light);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--color-text);
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.recent-item-content {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 12px;
+}
+
+.recent-item-date {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 转化率图表 */
+.conversion-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conversion-bar {
+  display: flex;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-border-light);
+}
+
+.conversion-segment {
+  transition: width 0.5s ease;
+  min-width: 0;
+}
+
+.conversion-pending { background: var(--color-info); }
+.conversion-doing { background: var(--color-warning); }
+.conversion-done { background: var(--color-success); }
+
+.conversion-legend {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-pending { background: var(--color-info); }
+.legend-doing { background: var(--color-warning); }
+.legend-done { background: var(--color-success); }
+
+/* 书籍进度列表 */
+.progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.progress-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-item-name {
+  width: 160px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-item-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--color-border-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-item-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.progress-item-value {
+  width: 44px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ===== 模态框 ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: modalIn 0.25s ease;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.modal-close:hover {
+  background: var(--color-border-light);
+  color: var(--color-text);
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+/* ===== 表单 ===== */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--color-text);
+}
+
+.form-label .required {
+  color: var(--color-danger);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--color-surface);
+  color: var(--color-text);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+/* 封面输入与预览 */
+.cover-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cover-input-row .form-input {
+  flex: 1;
+}
+
+.cover-input-row .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cover-preview {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.cover-preview img {
+  max-height: 160px;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-light);
+}
+
+/* 封面搜索结果列表 */
+.cover-search-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cover-search-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.cover-search-result {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.cover-search-result:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.cover-search-result img {
+  width: 45px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.cover-search-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cover-search-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cover-search-author {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.color-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.color-option {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all var(--transition);
+}
+
+.color-option.selected {
+  border-color: var(--color-text);
+  transform: scale(1.1);
+}
+
+/* ===== Toast ===== */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  background: var(--color-text);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 0.3s ease;
+  max-width: 360px;
+}
+
+.toast.success { background: var(--color-success); }
+.toast.error { background: var(--color-danger); }
+.toast.info { background: var(--color-info); }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== 空状态通用 ===== */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.3;
+}
+
+.empty-state-text {
+  font-size: 14px;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 60px;
+  }
+  .logo-text,
+  .nav-item span,
+  .stats-mini {
+    display: none;
+  }
+  .logo {
+    justify-content: center;
+    padding: 20px 0;
+  }
+  .nav-item {
+    justify-content: center;
+  }
+  .main-content {
+    margin-left: 60px;
+    padding: 20px;
+  }
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .action-board {
+    grid-template-columns: 1fr;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 侧边导航 -->
+    <nav class="sidebar">
+      <div class="logo">
+        <span class="logo-icon">知</span>
+        <span class="logo-text">知行</span>
+      </div>
+      <ul class="nav-list">
+        <li class="nav-item active" data-view="books">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span>书架</span>
+        </li>
+        <li class="nav-item" data-view="notes">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+          <span>笔记</span>
+        </li>
+        <li class="nav-item" data-view="actions">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>行动</span>
+        </li>
+        <li class="nav-item" data-view="dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>总览</span>
+        </li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="stats-mini" id="statsMini"></div>
+      </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 书架视图 -->
+      <section class="view active" id="view-books">
+        <div class="view-header">
+          <h1 class="view-title">书架</h1>
+          <button class="btn btn-primary" id="btnAddBook">+ 添加书籍</button>
+        </div>
+        <div class="book-grid" id="bookGrid"></div>
+      </section>
+
+      <!-- 笔记视图 -->
+      <section class="view" id="view-notes">
+        <div class="view-header">
+          <h1 class="view-title">读书笔记</h1>
+          <button class="btn btn-primary" id="btnAddNote">+ 新建笔记</button>
+        </div>
+        <div class="filter-bar" id="noteFilters">
+          <select class="filter-select" id="noteFilterBook">
+            <option value="">全部书籍</option>
+          </select>
+        </div>
+        <div class="note-list" id="noteList"></div>
+      </section>
+
+      <!-- 行动视图 -->
+      <section class="view" id="view-actions">
+        <div class="view-header">
+          <h1 class="view-title">行动看板</h1>
+          <button class="btn btn-primary" id="btnAddAction">+ 提炼行动点</button>
+        </div>
+        <div class="action-board" id="actionBoard">
+          <div class="action-column" data-status="pending">
+            <div class="column-header">
+              <span class="column-title">待执行</span>
+              <span class="column-count" id="countPending">0</span>
+            </div>
+            <div class="column-body" id="colPending"></div>
+          </div>
+          <div class="action-column" data-status="doing">
+            <div class="column-header">
+              <span class="column-title">进行中</span>
+              <span class="column-count" id="countDoing">0</span>
+            </div>
+            <div class="column-body" id="colDoing"></div>
+          </div>
+          <div class="action-column" data-status="done">
+            <div class="column-header">
+              <span class="column-title">已完成</span>
+              <span class="column-count" id="countDone">0</span>
+            </div>
+            <div class="column-body" id="colDone"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 总览仪表盘 -->
+      <section class="view" id="view-dashboard">
+        <div class="view-header">
+          <h1 class="view-title">知行总览</h1>
+        </div>
+        <div class="dashboard-grid">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-book">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <div class="stat-value" id="statBooks">0</div>
+            <div class="stat-label">书籍</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="stat-value" id="statNotes">0</div>
+            <div class="stat-label">笔记</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-action">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div class="stat-value" id="statActions">0</div>
+            <div class="stat-label">行动点</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-done">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="stat-value" id="statDone">0</div>
+            <div class="stat-label">已完成行动</div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h2 class="section-title">最近笔记</h2>
+          <div class="recent-list" id="recentNotes"></div>
+        </div>
+
+        <div class="dashboard-section">
+          <h2 class="section-title">行动转化率</h2>
+          <div class="conversion-chart">
+            <div class="conversion-bar">
+              <div class="conversion-segment conversion-pending" id="convPending" title="待执行"></div>
+              <div class="conversion-segment conversion-doing" id="convDoing" title="进行中"></div>
+              <div class="conversion-segment conversion-done" id="convDone" title="已完成"></div>
+            </div>
+            <div class="conversion-legend">
+              <span class="legend-item"><span class="legend-dot legend-pending"></span>待执行 <span id="legendPending">0</span></span>
+              <span class="legend-item"><span class="legend-dot legend-doing"></span>进行中 <span id="legendDoing">0</span></span>
+              <span class="legend-item"><span class="legend-dot legend-done"></span>已完成 <span id="legendDone">0</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h2 class="section-title">书籍阅读进度</h2>
+          <div class="progress-list" id="bookProgressList"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 模态框 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContainer">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">标题</h2>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+/**
+ * 知行 · 存储层
+ * 基于 localStorage 的本地数据持久化
+ */
+
+const STORAGE_PREFIX = 'zhixing_'
+
+const Storage = {
+  // 通用读取
+  get(key, defaultValue = []) {
+    try {
+      const raw = localStorage.getItem(STORAGE_PREFIX + key)
+      return raw ? JSON.parse(raw) : defaultValue
+    } catch (e) {
+      console.error('Storage.get error:', key, e)
+      return defaultValue
+    }
+  },
+
+  // 通用写入
+  set(key, value) {
+    try {
+      localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value))
+      return true
+    } catch (e) {
+      console.error('Storage.set error:', key, e)
+      return false
+    }
+  },
+
+  // 删除单条
+  remove(key) {
+    localStorage.removeItem(STORAGE_PREFIX + key)
+  },
+
+  // 清空全部
+  clearAll() {
+    Object.keys(localStorage)
+      .filter(k => k.startsWith(STORAGE_PREFIX))
+      .forEach(k => localStorage.removeItem(k))
+  }
+}
+
+// 生成唯一 ID
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+}
+
+// 格式化日期
+function formatDate(ts) {
+  if (!ts) return ''
+  const d = new Date(ts)
+  const now = new Date()
+  const diff = now - d
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return Math.floor(diff / 60000) + ' 分钟前'
+  if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前'
+  if (diff < 604800000) return Math.floor(diff / 86400000) + ' 天前'
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
+}
+
+
+/**
+ * 知行 · 应用主逻辑
+ * 读书 -> 知识管理 -> 指导行动
+ */
+
+
+
+// ===== 数据模型 =====
+// 书籍: { id, title, author, color, totalPages, currentPage, createdAt }
+// 笔记: { id, bookId, type('quote'|'insight'|'summary'), content, page, createdAt }
+// 行动: { id, title, description, source('manual'|'note'), noteId, bookId, priority('high'|'medium'|'low'), status('pending'|'doing'|'done'), createdAt, completedAt }
+
+// 书籍封面颜色预设
+const BOOK_COLORS = [
+  '#4f46e5', '#3b82f6', '#10b981', '#f59e0b',
+  '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4',
+  '#84cc16', '#f97316', '#6366f1', '#14b8a6'
+]
+
+// 笔记类型配置
+const NOTE_TYPES = {
+  quote: { label: '摘录', class: 'type-quote' },
+  insight: { label: '感悟', class: 'type-insight' },
+  summary: { label: '总结', class: 'type-summary' }
+}
+
+// 行动优先级配置
+const PRIORITY_CONFIG = {
+  high: { label: '高', class: 'priority-high' },
+  medium: { label: '中', class: 'priority-medium' },
+  low: { label: '低', class: 'priority-low' }
+}
+
+// ===== 全局状态 =====
+let currentView = 'books'
+let editingBookId = null
+let editingNoteId = null
+let editingActionId = null
+let dragData = null
+
+// ===== DOM 辅助 =====
+const $ = (sel) => document.querySelector(sel)
+const $$ = (sel) => document.querySelectorAll(sel)
+
+// ===== 导航切换 =====
+function switchView(viewName) {
+  currentView = viewName
+  $$('.nav-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.view === viewName)
+  })
+  $$('.view').forEach(view => {
+    view.classList.toggle('active', view.id === `view-${viewName}`)
+  })
+  if (viewName === 'dashboard') renderDashboard()
+}
+
+// ===== Toast 提示 =====
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div')
+  toast.className = `toast ${type}`
+  toast.textContent = message
+  $('#toastContainer').appendChild(toast)
+  setTimeout(() => {
+    toast.style.opacity = '0'
+    toast.style.transform = 'translateX(40px)'
+    toast.style.transition = 'all 0.3s ease'
+    setTimeout(() => toast.remove(), 300)
+  }, 2500)
+}
+
+// ===== 模态框 =====
+function openModal(title, bodyHTML) {
+  $('#modalTitle').textContent = title
+  $('#modalBody').innerHTML = bodyHTML
+  $('#modalOverlay').classList.add('active')
+}
+
+function closeModal() {
+  $('#modalOverlay').classList.remove('active')
+  editingBookId = null
+  editingNoteId = null
+  editingActionId = null
+}
+
+// ===== 书籍管理 =====
+function getBooks() {
+  return Storage.get('books', [])
+}
+
+function saveBooks(books) {
+  Storage.set('books', books)
+}
+
+function renderBooks() {
+  const books = getBooks()
+  const grid = $('#bookGrid')
+
+  if (books.length === 0) {
+    grid.innerHTML = `
+      <div class="book-empty">
+        <div class="book-empty-icon">📚</div>
+        <p>书架还是空的，点击「添加书籍」开始阅读之旅吧</p>
+      </div>
+    `
+    return
+  }
+
+  grid.innerHTML = books.map(book => {
+    const progress = book.totalPages > 0
+      ? Math.min(100, Math.round((book.currentPage / book.totalPages) * 100))
+      : 0
+    const coverStyle = book.coverUrl
+      ? `background-image: url('${escapeHtml(book.coverUrl)}'); background-size: cover; background-position: center top;`
+      : `background: ${book.color};`
+    return `
+      <div class="book-card${book.coverUrl ? ' book-card-has-cover' : ''}" data-book-id="${book.id}" style="${coverStyle}" data-fallback-color="${book.color}" data-fallback-char="${book.title.charAt(0) || '?'}">
+        ${!book.coverUrl ? `<span class="book-cover-fallback-char">${book.title.charAt(0) || '?'}</span>` : ''}
+        <div class="book-overlay">
+          <div class="book-info">
+            <div class="book-title" title="${escapeHtml(book.title)}">${escapeHtml(book.title)}</div>
+            <div class="book-author">${escapeHtml(book.author || '未知作者')}</div>
+            <div class="book-progress">
+              <div class="book-progress-bar">
+                <div class="book-progress-fill" style="width: ${progress}%"></div>
+              </div>
+              <span class="book-progress-text">${book.currentPage}/${book.totalPages || '?'}</span>
+            </div>
+          </div>
+          <div class="book-actions">
+            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();window.app.editBook('${book.id}')">编辑</button>
+            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();window.app.addNoteForBook('${book.id}')">记笔记</button>
+            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();window.app.deleteBook('${book.id}')">删除</button>
+          </div>
+        </div>
+      </div>
+    `
+  }).join('')
+
+  // 点击书卡跳转到该书笔记
+  $$('.book-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const bookId = card.dataset.bookId
+      $('#noteFilterBook').value = bookId
+      switchView('notes')
+      renderNotes()
+    })
+  })
+
+  // 封面图片加载失败时回退到纯色+首字
+  $$('.book-card-has-cover').forEach(card => {
+    const bgImg = card.style.backgroundImage
+    if (!bgImg || bgImg === 'none') return
+    const url = bgImg.replace(/url\(['"]?|['"]?\)/g, '')
+    if (!url) return
+    const img = new Image()
+    img.src = url
+    img.onerror = () => {
+      const color = card.dataset.fallbackColor || '#4f46e5'
+      const char = card.dataset.fallbackChar || '?'
+      card.classList.remove('book-card-has-cover')
+      card.style.background = color
+      card.style.backgroundImage = 'none'
+      const overlay = card.querySelector('.book-overlay')
+      if (overlay) {
+        const fallback = document.createElement('span')
+        fallback.className = 'book-cover-fallback-char'
+        fallback.textContent = char
+        card.insertBefore(fallback, overlay)
+      }
+    }
+  })
+}
+
+function showBookForm(bookId = null) {
+  editingBookId = bookId
+  const book = bookId ? getBooks().find(b => b.id === bookId) : null
+  const colorOptions = BOOK_COLORS.map(c =>
+    `<div class="color-option ${(!book && c === BOOK_COLORS[0]) || (book && book.color === c) ? 'selected' : ''}" data-color="${c}" style="background: ${c}"></div>`
+  ).join('')
+
+  openModal(book ? '编辑书籍' : '添加书籍', `
+    <form id="bookForm" onsubmit="return false">
+      <div class="form-group">
+        <label class="form-label">书名 <span class="required">*</span></label>
+        <input type="text" class="form-input" id="bookTitle" value="${book ? escapeHtml(book.title) : ''}" placeholder="请输入书名" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">作者</label>
+        <input type="text" class="form-input" id="bookAuthor" value="${book ? escapeHtml(book.author || '') : ''}" placeholder="请输入作者">
+      </div>
+      <div class="form-group">
+        <label class="form-label">封面图片</label>
+        <div class="cover-input-row">
+          <input type="text" class="form-input" id="bookCoverUrl" value="${book ? escapeHtml(book.coverUrl || '') : ''}" placeholder="粘贴封面图片 URL（可选）">
+          <button class="btn btn-secondary" type="button" id="btnSearchCover">搜索封面</button>
+        </div>
+        <div class="cover-preview" id="coverPreview">${book && book.coverUrl ? `<img src="${escapeHtml(book.coverUrl)}" alt="封面预览" onerror="this.style.display='none'">` : ''}</div>
+        <div class="form-hint">可粘贴豆瓣或其他网站的书籍封面图片 URL</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">总页数</label>
+          <input type="number" class="form-input" id="bookTotalPages" value="${book ? book.totalPages : ''}" placeholder="如 300" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">当前页</label>
+          <input type="number" class="form-input" id="bookCurrentPage" value="${book ? book.currentPage : 0}" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">封面颜色（无封面时使用）</label>
+        <div class="color-picker" id="colorPicker">${colorOptions}</div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="window.app.closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="window.app.saveBook()">保存</button>
+      </div>
+    </form>
+  `)
+
+  // 颜色选择
+  $$('#colorPicker .color-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      $$('#colorPicker .color-option').forEach(o => o.classList.remove('selected'))
+      opt.classList.add('selected')
+    })
+  })
+
+  // 搜索封面
+  $('#btnSearchCover').addEventListener('click', searchBookCover)
+}
+
+// 搜索书籍封面（本地静态版不支持在线搜索）
+async function searchBookCover() {
+  showToast('本地版不支持在线搜索，请直接粘贴图片 URL', 'info')
+}
+
+function saveBook() {
+  const title = $('#bookTitle').value.trim()
+  if (!title) {
+    showToast('请输入书名', 'error')
+    return
+  }
+  const author = $('#bookAuthor').value.trim()
+  const coverUrl = $('#bookCoverUrl').value.trim()
+  const totalPages = parseInt($('#bookTotalPages').value) || 0
+  const currentPage = parseInt($('#bookCurrentPage').value) || 0
+  const colorEl = $('#colorPicker .color-option.selected')
+  const color = colorEl ? colorEl.dataset.color : BOOK_COLORS[0]
+
+  const books = getBooks()
+
+  if (editingBookId) {
+    const book = books.find(b => b.id === editingBookId)
+    if (book) {
+      Object.assign(book, { title, author, coverUrl, totalPages, currentPage, color })
+    }
+  } else {
+    books.push({
+      id: genId(),
+      title, author, coverUrl, color,
+      totalPages, currentPage: Math.min(currentPage, totalPages),
+      createdAt: Date.now()
+    })
+  }
+
+  saveBooks(books)
+  closeModal()
+  renderBooks()
+  renderNoteFilters()
+  renderStatsMini()
+  showToast(editingBookId ? '书籍已更新' : '书籍已添加', 'success')
+}
+
+function deleteBook(bookId) {
+  const book = getBooks().find(b => b.id === bookId)
+  if (!book) return
+  if (!confirm(`确定要删除「${book.title}」吗？相关的笔记和行动点也会被删除。`)) return
+
+  const books = getBooks().filter(b => b.id !== bookId)
+  saveBooks(books)
+
+  // 删除关联笔记
+  const notes = getNotes().filter(n => n.bookId !== bookId)
+  saveNotes(notes)
+
+  // 删除关联行动
+  const actions = getActions().filter(a => a.bookId !== bookId)
+  saveActions(actions)
+
+  renderBooks()
+  renderNoteFilters()
+  renderStatsMini()
+  showToast('书籍已删除', 'success')
+}
+
+// ===== 笔记管理 =====
+function getNotes() {
+  return Storage.get('notes', [])
+}
+
+function saveNotes(notes) {
+  Storage.set('notes', notes)
+}
+
+function renderNoteFilters() {
+  const books = getBooks()
+  const select = $('#noteFilterBook')
+  const currentValue = select.value
+  select.innerHTML = '<option value="">全部书籍</option>' +
+    books.map(b => `<option value="${b.id}">${escapeHtml(b.title)}</option>`).join('')
+  select.value = currentValue
+}
+
+function renderNotes() {
+  const notes = getNotes().sort((a, b) => b.createdAt - a.createdAt)
+  const filterBook = $('#noteFilterBook').value
+  const filtered = filterBook ? notes.filter(n => n.bookId === filterBook) : notes
+  const books = getBooks()
+  const bookMap = {}
+  books.forEach(b => { bookMap[b.id] = b })
+
+  const list = $('#noteList')
+
+  if (filtered.length === 0) {
+    list.innerHTML = `
+      <div class="note-empty">
+        <div class="empty-state-icon">📝</div>
+        <p>还没有笔记，阅读时随手记下摘录和感悟吧</p>
+      </div>
+    `
+    return
+  }
+
+  list.innerHTML = filtered.map(note => {
+    const book = bookMap[note.bookId]
+    const typeConfig = NOTE_TYPES[note.type] || NOTE_TYPES.quote
+    return `
+      <div class="note-card" data-note-id="${note.id}">
+        <div class="note-card-header">
+          <div class="note-meta">
+            ${book ? `<span class="note-book-tag" style="background: ${book.color}">${escapeHtml(book.title)}</span>` : ''}
+            <span class="note-type-tag ${typeConfig.class}">${typeConfig.label}</span>
+            ${note.page ? `<span class="note-date">第 ${note.page} 页</span>` : ''}
+            <span class="note-date">${formatDate(note.createdAt)}</span>
+          </div>
+          <div class="note-card-actions">
+            <button class="action-icon-btn" onclick="window.app.editNote('${note.id}')" title="编辑">✎</button>
+            <button class="action-icon-btn" onclick="window.app.deleteNote('${note.id}')" title="删除">🗑</button>
+          </div>
+        </div>
+        <div class="note-content">${note.type === 'quote' ? '<span class="quote-mark">"</span>' : ''}${escapeHtml(note.content)}${note.type === 'quote' ? '<span class="quote-mark">"</span>' : ''}</div>
+        <div class="note-footer">
+          <span class="note-action-link" onclick="window.app.extractAction('${note.id}')">→ 从此笔记提炼行动点</span>
+        </div>
+      </div>
+    `
+  }).join('')
+}
+
+function showNoteForm(noteId = null, presetBookId = null) {
+  editingNoteId = noteId
+  const books = getBooks()
+  if (books.length === 0) {
+    showToast('请先添加书籍再记笔记', 'error')
+    return
+  }
+
+  const note = noteId ? getNotes().find(n => n.id === noteId) : null
+  const currentBookId = note ? note.bookId : (presetBookId || books[0].id)
+
+  openModal(note ? '编辑笔记' : '新建笔记', `
+    <form id="noteForm" onsubmit="return false">
+      <div class="form-group">
+        <label class="form-label">书籍 <span class="required">*</span></label>
+        <select class="form-select" id="noteBook">
+          ${books.map(b => `<option value="${b.id}" ${b.id === currentBookId ? 'selected' : ''}>${escapeHtml(b.title)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">类型</label>
+          <select class="form-select" id="noteType">
+            <option value="quote" ${note && note.type === 'quote' ? 'selected' : ''}>摘录</option>
+            <option value="insight" ${note && note.type === 'insight' ? 'selected' : ''}>感悟</option>
+            <option value="summary" ${note && note.type === 'summary' ? 'selected' : ''}>总结</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">页码</label>
+          <input type="number" class="form-input" id="notePage" value="${note ? note.page || '' : ''}" placeholder="可选" min="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">内容 <span class="required">*</span></label>
+        <textarea class="form-textarea" id="noteContent" placeholder="记下摘录原文、你的感悟或章节总结..." required>${note ? escapeHtml(note.content) : ''}</textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="window.app.closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="window.app.saveNote()">保存</button>
+      </div>
+    </form>
+  `)
+}
+
+function saveNote() {
+  const bookId = $('#noteBook').value
+  const type = $('#noteType').value
+  const page = parseInt($('#notePage').value) || null
+  const content = $('#noteContent').value.trim()
+
+  if (!content) {
+    showToast('请输入笔记内容', 'error')
+    return
+  }
+
+  const notes = getNotes()
+
+  if (editingNoteId) {
+    const note = notes.find(n => n.id === editingNoteId)
+    if (note) {
+      Object.assign(note, { bookId, type, page, content })
+    }
+  } else {
+    notes.push({
+      id: genId(),
+      bookId, type, page, content,
+      createdAt: Date.now()
+    })
+  }
+
+  saveNotes(notes)
+  closeModal()
+  renderNotes()
+  renderStatsMini()
+  showToast(editingNoteId ? '笔记已更新' : '笔记已添加', 'success')
+}
+
+function deleteNote(noteId) {
+  if (!confirm('确定要删除这条笔记吗？')) return
+  const notes = getNotes().filter(n => n.id !== noteId)
+  saveNotes(notes)
+  renderNotes()
+  renderStatsMini()
+  showToast('笔记已删除', 'success')
+}
+
+function addNoteForBook(bookId) {
+  showNoteForm(null, bookId)
+}
+
+// ===== 行动管理 =====
+function getActions() {
+  return Storage.get('actions', [])
+}
+
+function saveActions(actions) {
+  Storage.set('actions', actions)
+}
+
+function renderActions() {
+  const actions = getActions().sort((a, b) => {
+    const order = { high: 0, medium: 1, low: 2 }
+    return order[a.priority] - order[b.priority] || b.createdAt - a.createdAt
+  })
+
+  const books = getBooks()
+  const notes = getNotes()
+  const bookMap = {}
+  books.forEach(b => { bookMap[b.id] = b })
+  const noteMap = {}
+  notes.forEach(n => { noteMap[n.id] = n })
+
+  const columns = {
+    pending: { el: $('#colPending'), count: 0 },
+    doing: { el: $('#colDoing'), count: 0 },
+    done: { el: $('#colDone'), count: 0 }
+  }
+
+  Object.values(columns).forEach(c => { c.el.innerHTML = ''; c.count = 0 })
+
+  actions.forEach(action => {
+    const col = columns[action.status] || columns.pending
+    col.count++
+    const book = bookMap[action.bookId]
+    const note = noteMap[action.noteId]
+    const priorityConfig = PRIORITY_CONFIG[action.priority] || PRIORITY_CONFIG.medium
+
+    const card = document.createElement('div')
+    card.className = 'action-card'
+    card.draggable = true
+    card.dataset.actionId = action.id
+    card.dataset.status = action.status
+    card.innerHTML = `
+      <div class="action-card-header">
+        <span class="action-priority ${priorityConfig.class}">${priorityConfig.label}优先</span>
+        <div class="action-card-actions">
+          <button class="action-icon-btn" onclick="window.app.editAction('${action.id}')" title="编辑">✎</button>
+          <button class="action-icon-btn" onclick="window.app.deleteAction('${action.id}')" title="删除">🗑</button>
+        </div>
+      </div>
+      <div class="action-title">${escapeHtml(action.title)}</div>
+      ${action.description ? `<div class="action-desc">${escapeHtml(action.description)}</div>` : ''}
+      <div class="action-source">
+        ${book ? `<span class="action-source-tag" style="background: ${book.color}20; color: ${book.color}">${escapeHtml(book.title)}</span>` : ''}
+        ${note ? `<span style="color: var(--color-text-muted)">← 笔记</span>` : ''}
+        <span style="margin-left: auto; color: var(--color-text-muted)">${formatDate(action.createdAt)}</span>
+      </div>
+    `
+
+    // 拖拽事件
+    card.addEventListener('dragstart', (e) => {
+      dragData = action.id
+      card.classList.add('dragging')
+      e.dataTransfer.effectAllowed = 'move'
+    })
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging')
+      dragData = null
+    })
+
+    col.el.appendChild(card)
+  })
+
+  // 更新计数
+  $('#countPending').textContent = columns.pending.count
+  $('#countDoing').textContent = columns.doing.count
+  $('#countDone').textContent = columns.done.count
+
+  // 空状态
+  Object.entries(columns).forEach(([status, col]) => {
+    if (col.count === 0) {
+      col.el.innerHTML = '<div class="action-empty-col">暂无行动点</div>'
+    }
+  })
+}
+
+function showActionForm(actionId = null, presetNoteId = null) {
+  editingActionId = actionId
+  const books = getBooks()
+  const notes = getNotes()
+  const action = actionId ? getActions().find(a => a.id === actionId) : null
+
+  // 找到预设笔记
+  let presetBookId = ''
+  if (presetNoteId) {
+    const note = notes.find(n => n.id === presetNoteId)
+    if (note) presetBookId = note.bookId
+  }
+
+  openModal(action ? '编辑行动点' : '提炼行动点', `
+    <form id="actionForm" onsubmit="return false">
+      <div class="form-group">
+        <label class="form-label">行动标题 <span class="required">*</span></label>
+        <input type="text" class="form-input" id="actionTitle" value="${action ? escapeHtml(action.title) : ''}" placeholder="你打算做什么？如：每天早起阅读30分钟" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">具体描述</label>
+        <textarea class="form-textarea" id="actionDesc" placeholder="行动的具体计划、步骤或注意事项..." style="min-height: 80px">${action ? escapeHtml(action.description || '') : ''}</textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">优先级</label>
+          <select class="form-select" id="actionPriority">
+            <option value="high" ${action && action.priority === 'high' ? 'selected' : ''}>高</option>
+            <option value="medium" ${(!action || action.priority === 'medium') ? 'selected' : ''}>中</option>
+            <option value="low" ${action && action.priority === 'low' ? 'selected' : ''}>低</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">状态</label>
+          <select class="form-select" id="actionStatus">
+            <option value="pending" ${(!action || action.status === 'pending') ? 'selected' : ''}>待执行</option>
+            <option value="doing" ${action && action.status === 'doing' ? 'selected' : ''}>进行中</option>
+            <option value="done" ${action && action.status === 'done' ? 'selected' : ''}>已完成</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">关联书籍</label>
+        <select class="form-select" id="actionBook">
+          <option value="">不关联</option>
+          ${books.map(b => `<option value="${b.id}" ${(action && action.bookId === b.id) || presetBookId === b.id ? 'selected' : ''}>${escapeHtml(b.title)}</option>`).join('')}
+        </select>
+      </div>
+      ${presetNoteId ? `<input type="hidden" id="actionNoteId" value="${presetNoteId}">` : ''}
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="window.app.closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="window.app.saveAction()">保存</button>
+      </div>
+    </form>
+  `)
+}
+
+function saveAction() {
+  const title = $('#actionTitle').value.trim()
+  if (!title) {
+    showToast('请输入行动标题', 'error')
+    return
+  }
+  const description = $('#actionDesc').value.trim()
+  const priority = $('#actionPriority').value
+  const status = $('#actionStatus').value
+  const bookId = $('#actionBook').value || null
+  const noteIdInput = $('#actionNoteId')
+  const noteId = noteIdInput ? noteIdInput.value : null
+
+  const actions = getActions()
+
+  if (editingActionId) {
+    const action = actions.find(a => a.id === editingActionId)
+    if (action) {
+      const oldStatus = action.status
+      Object.assign(action, { title, description, priority, status, bookId })
+      if (noteId) action.noteId = noteId
+      if (status === 'done' && oldStatus !== 'done') {
+        action.completedAt = Date.now()
+      } else if (status !== 'done') {
+        action.completedAt = null
+      }
+    }
+  } else {
+    actions.push({
+      id: genId(),
+      title, description, priority, status, bookId,
+      noteId: noteId || null,
+      source: noteId ? 'note' : 'manual',
+      createdAt: Date.now(),
+      completedAt: status === 'done' ? Date.now() : null
+    })
+  }
+
+  saveActions(actions)
+  closeModal()
+  renderActions()
+  renderStatsMini()
+  showToast(editingActionId ? '行动点已更新' : '行动点已创建', 'success')
+}
+
+function deleteAction(actionId) {
+  if (!confirm('确定要删除这个行动点吗？')) return
+  const actions = getActions().filter(a => a.id !== actionId)
+  saveActions(actions)
+  renderActions()
+  renderStatsMini()
+  showToast('行动点已删除', 'success')
+}
+
+function extractAction(noteId) {
+  showActionForm(null, noteId)
+}
+
+// ===== 拖拽更新状态 =====
+function setupDragDrop() {
+  $$('.action-column').forEach(col => {
+    col.addEventListener('dragover', (e) => {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
+      col.classList.add('drag-over')
+    })
+    col.addEventListener('dragleave', () => {
+      col.classList.remove('drag-over')
+    })
+    col.addEventListener('drop', (e) => {
+      e.preventDefault()
+      col.classList.remove('drag-over')
+      if (!dragData) return
+      const newStatus = col.dataset.status
+      const actions = getActions()
+      const action = actions.find(a => a.id === dragData)
+      if (action && action.status !== newStatus) {
+        action.status = newStatus
+        if (newStatus === 'done') {
+          action.completedAt = Date.now()
+        } else {
+          action.completedAt = null
+        }
+        saveActions(actions)
+        renderActions()
+        renderStatsMini()
+        const statusLabels = { pending: '待执行', doing: '进行中', done: '已完成' }
+        showToast(`已移至「${statusLabels[newStatus]}」`, 'success')
+      }
+    })
+  })
+}
+
+// ===== 仪表盘 =====
+function renderDashboard() {
+  const books = getBooks()
+  const notes = getNotes()
+  const actions = getActions()
+
+  $('#statBooks').textContent = books.length
+  $('#statNotes').textContent = notes.length
+  $('#statActions').textContent = actions.length
+  $('#statDone').textContent = actions.filter(a => a.status === 'done').length
+
+  // 最近笔记
+  const recentNotes = notes.sort((a, b) => b.createdAt - a.createdAt).slice(0, 5)
+  const bookMap = {}
+  books.forEach(b => { bookMap[b.id] = b })
+  $('#recentNotes').innerHTML = recentNotes.length > 0
+    ? recentNotes.map(n => {
+        const book = bookMap[n.bookId]
+        return `
+          <div class="recent-item">
+            <span class="recent-item-content">
+              ${book ? `<span style="color: ${book.color}; font-weight: 600;">${escapeHtml(book.title)}</span> · ` : ''}
+              ${escapeHtml(n.content.slice(0, 60))}${n.content.length > 60 ? '...' : ''}
+            </span>
+            <span class="recent-item-date">${formatDate(n.createdAt)}</span>
+          </div>
+        `
+      }).join('')
+    : '<div class="recent-item" style="color: var(--color-text-muted)">暂无笔记</div>'
+
+  // 行动转化率
+  const pending = actions.filter(a => a.status === 'pending').length
+  const doing = actions.filter(a => a.status === 'doing').length
+  const done = actions.filter(a => a.status === 'done').length
+  const total = actions.length
+
+  $('#legendPending').textContent = pending
+  $('#legendDoing').textContent = doing
+  $('#legendDone').textContent = done
+
+  if (total > 0) {
+    $('#convPending').style.width = `${(pending / total * 100)}%`
+    $('#convDoing').style.width = `${(doing / total * 100)}%`
+    $('#convDone').style.width = `${(done / total * 100)}%`
+  } else {
+    $('#convPending').style.width = '0%'
+    $('#convDoing').style.width = '0%'
+    $('#convDone').style.width = '0%'
+  }
+
+  // 书籍阅读进度
+  $('#bookProgressList').innerHTML = books.length > 0
+    ? books.map(b => {
+        const progress = b.totalPages > 0
+          ? Math.min(100, Math.round((b.currentPage / b.totalPages) * 100))
+          : 0
+        const color = progress === 100 ? 'var(--color-success)' : progress > 50 ? 'var(--color-primary)' : 'var(--color-warning)'
+        return `
+          <div class="progress-item">
+            <span class="progress-item-name" title="${escapeHtml(b.title)}">${escapeHtml(b.title)}</span>
+            <div class="progress-item-bar">
+              <div class="progress-item-fill" style="width: ${progress}%; background: ${color}"></div>
+            </div>
+            <span class="progress-item-value">${progress}%</span>
+          </div>
+        `
+      }).join('')
+    : '<div style="color: var(--color-text-muted); text-align: center; padding: 20px;">暂无书籍</div>'
+}
+
+// ===== 侧边栏迷你统计 =====
+function renderStatsMini() {
+  const books = getBooks().length
+  const notes = getNotes().length
+  const actions = getActions().length
+  const done = getActions().filter(a => a.status === 'done').length
+  $('#statsMini').innerHTML = `
+    📚 ${books} 本书 · 📝 ${notes} 条笔记<br>
+    ✅ ${done}/${actions} 行动完成
+  `
+}
+
+// ===== HTML 转义 =====
+function escapeHtml(str) {
+  if (!str) return ''
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+// ===== 初始化 =====
+function init() {
+  // 导航绑定
+  $$('.nav-item').forEach(item => {
+    item.addEventListener('click', () => switchView(item.dataset.view))
+  })
+
+  // 按钮绑定
+  $('#btnAddBook').addEventListener('click', () => showBookForm())
+  $('#btnAddNote').addEventListener('click', () => showNoteForm())
+  $('#btnAddAction').addEventListener('click', () => showActionForm())
+
+  // 笔记筛选
+  $('#noteFilterBook').addEventListener('change', renderNotes)
+
+  // 模态框关闭
+  $('#modalClose').addEventListener('click', closeModal)
+  $('#modalOverlay').addEventListener('click', (e) => {
+    if (e.target === $('#modalOverlay')) closeModal()
+  })
+
+  // ESC 关闭模态框
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal()
+  })
+
+  // 拖拽
+  setupDragDrop()
+
+  // 首次渲染
+  renderBooks()
+  renderNoteFilters()
+  renderNotes()
+  renderActions()
+  renderStatsMini()
+
+  // 如果是空数据，插入示例数据
+  if (getBooks().length === 0 && getNotes().length === 0 && getActions().length === 0) {
+    seedDemoData()
+  }
+}
+
+// ===== 示例数据 =====
+function seedDemoData() {
+  const bookId = genId()
+  const noteId1 = genId()
+  const noteId2 = genId()
+  const actionId1 = genId()
+
+  saveBooks([{
+    id: bookId,
+    title: '原子习惯',
+    author: 'James Clear',
+    color: '#4f46e5',
+    coverUrl: '',
+    totalPages: 320,
+    currentPage: 85,
+    createdAt: Date.now() - 86400000 * 3
+  }])
+
+  saveNotes([
+    {
+      id: noteId1,
+      bookId,
+      type: 'quote',
+      content: '习惯是自我提高的复利。每天进步 1%，一年后你将进步 37 倍。',
+      page: 15,
+      createdAt: Date.now() - 86400000 * 2
+    },
+    {
+      id: noteId2,
+      bookId,
+      type: 'insight',
+      content: '不要只关注目标，更要关注体系。目标决定了方向，而体系决定了你能走多远。',
+      page: 32,
+      createdAt: Date.now() - 86400000
+    }
+  ])
+
+  saveActions([{
+    id: actionId1,
+    title: '每天早起阅读 30 分钟',
+    description: '利用「习惯叠加」方法：早起刷完牙后立即拿起书本阅读 30 分钟。先从微习惯开始，哪怕只读 2 页也好。',
+    priority: 'high',
+    status: 'doing',
+    bookId,
+    noteId: noteId1,
+    source: 'note',
+    createdAt: Date.now() - 86400000,
+    completedAt: null
+  }])
+
+  renderBooks()
+  renderNoteFilters()
+  renderNotes()
+  renderActions()
+  renderStatsMini()
+}
+
+// ===== 暴露到全局 =====
+window.app = {
+  editBook: (id) => showBookForm(id),
+  deleteBook: (id) => deleteBook(id),
+  addNoteForBook: (id) => addNoteForBook(id),
+  editNote: (id) => showNoteForm(id),
+  deleteNote: (id) => deleteNote(id),
+  editAction: (id) => showActionForm(id),
+  deleteAction: (id) => deleteAction(id),
+  extractAction: (noteId) => extractAction(noteId),
+  saveBook,
+  saveNote,
+  saveAction,
+  closeModal
+}
+
+// 启动
+init()
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>知行 · 读书到行动</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 侧边导航 -->
+    <nav class="sidebar">
+      <div class="logo">
+        <span class="logo-icon">知</span>
+        <span class="logo-text">知行</span>
+      </div>
+      <ul class="nav-list">
+        <li class="nav-item active" data-view="books">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span>书架</span>
+        </li>
+        <li class="nav-item" data-view="notes">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+          <span>笔记</span>
+        </li>
+        <li class="nav-item" data-view="actions">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>行动</span>
+        </li>
+        <li class="nav-item" data-view="dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>总览</span>
+        </li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="stats-mini" id="statsMini"></div>
+      </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 书架视图 -->
+      <section class="view active" id="view-books">
+        <div class="view-header">
+          <h1 class="view-title">书架</h1>
+          <button class="btn btn-primary" id="btnAddBook">+ 添加书籍</button>
+        </div>
+        <div class="book-grid" id="bookGrid"></div>
+      </section>
+
+      <!-- 笔记视图 -->
+      <section class="view" id="view-notes">
+        <div class="view-header">
+          <h1 class="view-title">读书笔记</h1>
+          <button class="btn btn-primary" id="btnAddNote">+ 新建笔记</button>
+        </div>
+        <div class="filter-bar" id="noteFilters">
+          <select class="filter-select" id="noteFilterBook">
+            <option value="">全部书籍</option>
+          </select>
+        </div>
+        <div class="note-list" id="noteList"></div>
+      </section>
+
+      <!-- 行动视图 -->
+      <section class="view" id="view-actions">
+        <div class="view-header">
+          <h1 class="view-title">行动看板</h1>
+          <button class="btn btn-primary" id="btnAddAction">+ 提炼行动点</button>
+        </div>
+        <div class="action-board" id="actionBoard">
+          <div class="action-column" data-status="pending">
+            <div class="column-header">
+              <span class="column-title">待执行</span>
+              <span class="column-count" id="countPending">0</span>
+            </div>
+            <div class="column-body" id="colPending"></div>
+          </div>
+          <div class="action-column" data-status="doing">
+            <div class="column-header">
+              <span class="column-title">进行中</span>
+              <span class="column-count" id="countDoing">0</span>
+            </div>
+            <div class="column-body" id="colDoing"></div>
+          </div>
+          <div class="action-column" data-status="done">
+            <div class="column-header">
+              <span class="column-title">已完成</span>
+              <span class="column-count" id="countDone">0</span>
+            </div>
+            <div class="column-body" id="colDone"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 总览仪表盘 -->
+      <section class="view" id="view-dashboard">
+        <div class="view-header">
+          <h1 class="view-title">知行总览</h1>
+        </div>
+        <div class="dashboard-grid">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-book">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <div class="stat-value" id="statBooks">0</div>
+            <div class="stat-label">书籍</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="stat-value" id="statNotes">0</div>
+            <div class="stat-label">笔记</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-action">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div class="stat-value" id="statActions">0</div>
+            <div class="stat-label">行动点</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-done">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="stat-value" id="statDone">0</div>
+            <div class="stat-label">已完成行动</div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h2 class="section-title">最近笔记</h2>
+          <div class="recent-list" id="recentNotes"></div>
+        </div>
+
+        <div class="dashboard-section">
+          <h2 class="section-title">行动转化率</h2>
+          <div class="conversion-chart">
+            <div class="conversion-bar">
+              <div class="conversion-segment conversion-pending" id="convPending" title="待执行"></div>
+              <div class="conversion-segment conversion-doing" id="convDoing" title="进行中"></div>
+              <div class="conversion-segment conversion-done" id="convDone" title="已完成"></div>
+            </div>
+            <div class="conversion-legend">
+              <span class="legend-item"><span class="legend-dot legend-pending"></span>待执行 <span id="legendPending">0</span></span>
+              <span class="legend-item"><span class="legend-dot legend-doing"></span>进行中 <span id="legendDoing">0</span></span>
+              <span class="legend-item"><span class="legend-dot legend-done"></span>已完成 <span id="legendDone">0</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h2 class="section-title">书籍阅读进度</h2>
+          <div class="progress-list" id="bookProgressList"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 模态框 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContainer">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">标题</h2>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
