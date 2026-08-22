@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>知行 · 读书到行动</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="./src/styles.css" />
@@ -44,8 +47,13 @@
       <section class="view active" id="view-books">
         <div class="view-header">
           <h1 class="view-title">书架</h1>
-          <button class="btn btn-primary" id="btnAddBook">+ 添加书籍</button>
+          <div class="view-header-actions">
+            <div class="fixed-tags" id="fixedTags"></div>
+            <button class="btn btn-secondary" id="btnManageCategories">管理分类</button>
+            <button class="btn btn-primary" id="btnAddBook">+ 添加书籍</button>
+          </div>
         </div>
+        <div class="category-bar" id="categoryBar"></div>
         <div class="book-grid" id="bookGrid"></div>
       </section>
 

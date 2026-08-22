@@ -33,9 +33,10 @@ async function detectProxy() {
 detectProxy()
 
 // ===== 数据模型 =====
-// 书籍: { id, title, author, color, totalPages, currentPage, createdAt }
+// 书籍: { id, title, author, color, coverUrl, totalPages, currentPage, createdAt, categoryId }
 // 笔记: { id, bookId, type('quote'|'insight'|'summary'), content, page, createdAt }
 // 行动: { id, title, description, source('manual'|'note'), noteId, bookId, priority('high'|'medium'|'low'), status('pending'|'doing'|'done'), createdAt, completedAt }
+// 分类: { id, name, createdAt, sort }
 
 // 书籍封面颜色预设
 const BOOK_COLORS = [
@@ -64,6 +65,7 @@ let editingBookId = null
 let editingNoteId = null
 let editingActionId = null
 let dragData = null
+let currentCategoryFilter = 'all'
 
 // ===== DOM 辅助 =====
 const $ = (sel) => document.querySelector(sel)
@@ -79,6 +81,23 @@ function switchView(viewName) {
     view.classList.toggle('active', view.id === `view-${viewName}`)
   })
   if (viewName === 'dashboard') renderDashboard()
+  if (viewName === 'books') renderCategoryFilter()
+}
+
+// 从笔记跳转到行动看板并高亮目标行动卡片
+function jumpToAction(actionId) {
+  switchView('actions')
+  renderActions()
+  // 等渲染完成后高亮目标卡片
+  setTimeout(() => {
+    const card = document.querySelector(`.action-card[data-action-id="${actionId}"]`)
+    if (card) {
+      card.classList.add('action-card-highlight')
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      // 3秒后移除高亮
+      setTimeout(() => card.classList.remove('action-card-highlight'), 3000)
+    }
+  }, 100)
 }
 
 // ===== Toast 提示 =====
@@ -109,6 +128,86 @@ function closeModal() {
   editingActionId = null
 }
 
+// ===== 分类管理 =====
+function getCategories() {
+  return Storage.get('categories', []).sort((a, b) => {
+    return (a.sort ?? 0) - (b.sort ?? 0) || a.createdAt - b.createdAt
+  })
+}
+
+function saveCategories(categories) {
+  Storage.set('categories', categories)
+}
+
+function getCategoryById(id) {
+  return getCategories().find(c => c.id === id) || null
+}
+
+function getFilteredBooks() {
+  const books = getBooks()
+  if (currentCategoryFilter === 'all') return books
+  if (currentCategoryFilter === 'uncategorized') {
+    return books.filter(b => !b.categoryId)
+  }
+  return books.filter(b => b.categoryId === currentCategoryFilter)
+}
+
+function renderCategoryFilter() {
+  const books = getBooks()
+  const categories = getCategories()
+  const bar = $('#categoryBar')
+  if (!bar) return
+
+  const countAll = books.length
+  const countUncategorized = books.filter(b => !b.categoryId).length
+
+  const tags = [
+    { key: 'all', label: '全部', count: countAll },
+    { key: 'uncategorized', label: '未分类', count: countUncategorized },
+    ...categories.map(c => ({
+      key: c.id,
+      label: c.name,
+      description: c.description,
+      count: books.filter(b => b.categoryId === c.id).length
+    }))
+  ]
+
+  // 分离固定标签和分类标签
+  const fixedTags = tags.filter(t => t.key === 'all' || t.key === 'uncategorized')
+  const categoryTags = tags.filter(t => t.key !== 'all' && t.key !== 'uncategorized')
+
+  // 渲染固定标签到 header-actions 中
+  const fixedTagsContainer = $('#fixedTags')
+  if (fixedTagsContainer) {
+    fixedTagsContainer.innerHTML = fixedTags.map(t => `
+      <span class="category-tag category-tag-fixed ${currentCategoryFilter === t.key ? 'active' : ''}" data-category="${t.key}">
+        <span>${escapeHtml(t.label)}</span>
+        <span class="category-tag-count">${t.count}</span>
+      </span>
+    `).join('')
+  }
+
+  // 渲染可拖拽分类标签到 category-bar
+  bar.innerHTML = categoryTags.map(t => {
+    return `
+    <span class="category-tag ${currentCategoryFilter === t.key ? 'active' : ''}" data-category="${t.key}" ${t.description ? `title="${escapeHtml(t.description)}"` : ''} draggable="true">
+      <span>${escapeHtml(t.label)}</span>
+      <span class="category-tag-count">${t.count}</span>
+    </span>
+  `}).join('') + `
+    <span class="category-tag category-tag-add" data-action="add" title="新建分类">+</span>
+  `
+
+  // 分类标签拖拽排序
+  setupCategoryDragDrop()
+}
+
+function setCategoryFilter(key) {
+  currentCategoryFilter = key
+  renderCategoryFilter()
+  renderBooks()
+}
+
 // ===== 书籍管理 =====
 function getBooks() {
   return Storage.get('books', [])
@@ -119,14 +218,21 @@ function saveBooks(books) {
 }
 
 function renderBooks() {
-  const books = getBooks()
+  const books = getFilteredBooks()
   const grid = $('#bookGrid')
 
   if (books.length === 0) {
+    let emptyText = '书架还是空的，点击「添加书籍」开始阅读之旅吧'
+    if (currentCategoryFilter === 'uncategorized') {
+      emptyText = '没有未分类的书籍'
+    } else if (currentCategoryFilter !== 'all') {
+      const cat = getCategoryById(currentCategoryFilter)
+      emptyText = cat ? `分类「${cat.name}」下还没有书籍` : emptyText
+    }
     grid.innerHTML = `
       <div class="book-empty">
         <div class="book-empty-icon">📚</div>
-        <p>书架还是空的，点击「添加书籍」开始阅读之旅吧</p>
+        <p>${emptyText}</p>
       </div>
     `
     return
@@ -154,9 +260,9 @@ function renderBooks() {
             </div>
           </div>
           <div class="book-actions">
-            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();window.app.editBook('${book.id}')">编辑</button>
-            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();window.app.addNoteForBook('${book.id}')">记笔记</button>
-            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();window.app.deleteBook('${book.id}')">删除</button>
+            <button class="btn btn-secondary btn-sm book-action-btn" onclick="event.stopPropagation();window.app.editBook('${book.id}')" title="编辑"><span class="btn-icon">✎</span><span class="btn-text">编辑</span></button>
+            <button class="btn btn-secondary btn-sm book-action-btn" onclick="event.stopPropagation();window.app.addNoteForBook('${book.id}')" title="记笔记"><span class="btn-icon">＋</span><span class="btn-text">记笔记</span></button>
+            <button class="btn btn-danger btn-sm book-action-btn" onclick="event.stopPropagation();window.app.deleteBook('${book.id}')" title="删除"><span class="btn-icon">✕</span><span class="btn-text">删除</span></button>
           </div>
         </div>
       </div>
@@ -205,6 +311,10 @@ function showBookForm(bookId = null) {
     `<div class="color-option ${(!book && c === BOOK_COLORS[0]) || (book && book.color === c) ? 'selected' : ''}" data-color="${c}" style="background: ${c}"></div>`
   ).join('')
 
+  const categories = getCategories()
+  const categoryOptions = '<option value="">未分类</option>' +
+    categories.map(c => `<option value="${c.id}" ${book && book.categoryId === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')
+
   openModal(book ? '编辑书籍' : '添加书籍', `
     <form id="bookForm" onsubmit="return false">
       <div class="form-group">
@@ -214,6 +324,10 @@ function showBookForm(bookId = null) {
       <div class="form-group">
         <label class="form-label">作者</label>
         <input type="text" class="form-input" id="bookAuthor" value="${book ? escapeHtml(book.author || '') : ''}" placeholder="请输入作者">
+      </div>
+      <div class="form-group">
+        <label class="form-label">分类</label>
+        <select class="form-select" id="bookCategory">${categoryOptions}</select>
       </div>
       <div class="form-group">
         <label class="form-label">封面图片</label>
@@ -356,26 +470,29 @@ function saveBook() {
   const currentPage = parseInt($('#bookCurrentPage').value) || 0
   const colorEl = $('#colorPicker .color-option.selected')
   const color = colorEl ? colorEl.dataset.color : BOOK_COLORS[0]
+  const categoryId = $('#bookCategory').value || null
 
   const books = getBooks()
 
   if (editingBookId) {
     const book = books.find(b => b.id === editingBookId)
     if (book) {
-      Object.assign(book, { title, author, coverUrl, totalPages, currentPage, color })
+      Object.assign(book, { title, author, coverUrl, totalPages, currentPage, color, categoryId })
     }
   } else {
     books.push({
       id: genId(),
       title, author, coverUrl, color,
       totalPages, currentPage: Math.min(currentPage, totalPages),
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      categoryId
     })
   }
 
   saveBooks(books)
   closeModal()
   renderBooks()
+  renderCategoryFilter()
   renderNoteFilters()
   renderStatsMini()
   showToast(editingBookId ? '书籍已更新' : '书籍已添加', 'success')
@@ -398,9 +515,173 @@ function deleteBook(bookId) {
   saveActions(actions)
 
   renderBooks()
+  renderCategoryFilter()
   renderNoteFilters()
   renderStatsMini()
   showToast('书籍已删除', 'success')
+}
+
+// ===== 分类管理模态框 =====
+function showCategoryManageModal() {
+  openModal('管理分类', `
+    <div id="categoryManageContainer"></div>
+    <div class="category-manage-hint">
+      提示：删除分类后，该分类下的书籍会变为「未分类」，书籍本身不会被删除。
+    </div>
+  `)
+  renderCategoryManageList()
+}
+
+function renderCategoryManageList() {
+  const categories = getCategories()
+  const books = getBooks()
+  const container = $('#categoryManageContainer')
+  if (!container) return
+
+  const listHTML = categories.length === 0
+    ? '<div class="category-manage-empty">还没有分类，在下方输入名称创建一个吧</div>'
+    : categories.map(c => `
+      <div class="category-manage-item" data-category-id="${c.id}">
+        <div class="category-manage-info">
+          <span class="category-manage-name">${escapeHtml(c.name)}</span>
+          ${c.description ? `<span class="category-manage-desc" title="${escapeHtml(c.description)}">${escapeHtml(c.description)}</span>` : ''}
+        </div>
+        <span class="category-manage-count">${books.filter(b => b.categoryId === c.id).length} 本书</span>
+        <div class="category-manage-actions">
+          <button class="btn btn-secondary btn-sm" data-action="rename" data-id="${c.id}">编辑</button>
+          <button class="btn btn-danger btn-sm" data-action="delete" data-id="${c.id}">删除</button>
+        </div>
+      </div>
+    `).join('')
+
+  container.innerHTML = `
+    <div class="category-manage-list" id="categoryManageList">${listHTML}</div>
+    <div class="category-manage-add-row">
+      <input type="text" class="form-input" id="newCategoryName" placeholder="分类名称（如：认知思维）" maxlength="20">
+      <input type="text" class="form-input" id="newCategoryDesc" placeholder="分类描述（鼠标悬停时显示）" maxlength="100">
+      <button class="btn btn-primary" id="btnCreateCategory">新建</button>
+    </div>
+  `
+
+  $('#btnCreateCategory').addEventListener('click', createCategoryFromInput)
+  $('#newCategoryName').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') createCategoryFromInput()
+  })
+  $('#categoryManageList').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]')
+    if (!btn) return
+    const action = btn.dataset.action
+    const id = btn.dataset.id
+    if (action === 'rename') startRenameCategory(id)
+    if (action === 'delete') deleteCategory(id)
+  })
+}
+
+function createCategoryFromInput() {
+  const input = $('#newCategoryName')
+  const descInput = $('#newCategoryDesc')
+  if (!input) return
+  const name = input.value.trim()
+  if (!name) { showToast('请输入分类名称', 'error'); return }
+  const description = descInput ? descInput.value.trim() : ''
+  createCategory(name, description)
+  input.value = ''
+  if (descInput) descInput.value = ''
+}
+
+function createCategory(name, description = '') {
+  const categories = getCategories()
+  if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+    showToast('该分类已存在', 'error')
+    return
+  }
+  categories.push({
+    id: genId(),
+    name,
+    description,
+    createdAt: Date.now(),
+    sort: categories.length
+  })
+  saveCategories(categories)
+  renderCategoryManageList()
+  renderCategoryFilter()
+  showToast('分类已创建', 'success')
+}
+
+function startRenameCategory(id) {
+  const item = document.querySelector(`.category-manage-item[data-category-id="${id}"]`)
+  if (!item) return
+  const cat = getCategoryById(id)
+  if (!cat) return
+  item.innerHTML = `
+    <div class="category-manage-edit-form">
+      <input type="text" class="category-manage-input" id="renameInput_${id}" value="${escapeHtml(cat.name)}" placeholder="分类名称" maxlength="20">
+      <input type="text" class="category-manage-input" id="renameDesc_${id}" value="${escapeHtml(cat.description || '')}" placeholder="分类描述（鼠标悬停时显示）" maxlength="100">
+    </div>
+    <div class="category-manage-actions">
+      <button class="btn btn-primary btn-sm" data-action="save-rename" data-id="${id}">保存</button>
+      <button class="btn btn-secondary btn-sm" data-action="cancel-rename" data-id="${id}">取消</button>
+    </div>
+  `
+  const input = $(`#renameInput_${id}`)
+  input.focus()
+  input.select()
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doRenameCategory(id)
+    if (e.key === 'Escape') renderCategoryManageList()
+  })
+  item.querySelector('[data-action="save-rename"]').addEventListener('click', () => doRenameCategory(id))
+  item.querySelector('[data-action="cancel-rename"]').addEventListener('click', renderCategoryManageList)
+}
+
+function doRenameCategory(id) {
+  const input = $(`#renameInput_${id}`)
+  const descInput = $(`#renameDesc_${id}`)
+  if (!input) return
+  const name = input.value.trim()
+  if (!name) { showToast('分类名称不能为空', 'error'); return }
+  const description = descInput ? descInput.value.trim() : ''
+  const categories = getCategories()
+  if (categories.some(c => c.id !== id && c.name.toLowerCase() === name.toLowerCase())) {
+    showToast('该分类已存在', 'error')
+    return
+  }
+  const cat = categories.find(c => c.id === id)
+  if (cat) {
+    cat.name = name
+    cat.description = description
+    saveCategories(categories)
+    renderCategoryManageList()
+    renderCategoryFilter()
+    showToast('分类已重命名', 'success')
+  }
+}
+
+function deleteCategory(id) {
+  const cat = getCategoryById(id)
+  if (!cat) return
+  const count = getBooks().filter(b => b.categoryId === id).length
+  const msg = count > 0
+    ? `确定要删除分类「${cat.name}」吗？该分类下的 ${count} 本书将变为「未分类」。`
+    : `确定要删除分类「${cat.name}」吗？`
+  if (!confirm(msg)) return
+
+  const categories = getCategories().filter(c => c.id !== id)
+  saveCategories(categories)
+
+  const books = getBooks()
+  let changed = false
+  books.forEach(b => {
+    if (b.categoryId === id) { b.categoryId = null; changed = true }
+  })
+  if (changed) saveBooks(books)
+
+  if (currentCategoryFilter === id) currentCategoryFilter = 'all'
+
+  renderCategoryManageList()
+  renderCategoryFilter()
+  renderBooks()
+  showToast('分类已删除', 'success')
 }
 
 // ===== 笔记管理 =====
@@ -428,6 +709,16 @@ function renderNotes() {
   const books = getBooks()
   const bookMap = {}
   books.forEach(b => { bookMap[b.id] = b })
+
+  // 构建笔记→行动点映射
+  const actions = getActions()
+  const actionsByNoteId = {}
+  actions.forEach(a => {
+    if (a.noteId) {
+      if (!actionsByNoteId[a.noteId]) actionsByNoteId[a.noteId] = []
+      actionsByNoteId[a.noteId].push(a)
+    }
+  })
 
   const list = $('#noteList')
 
@@ -461,6 +752,10 @@ function renderNotes() {
         <div class="note-content">${note.type === 'quote' ? '<span class="quote-mark">"</span>' : ''}${escapeHtml(note.content)}${note.type === 'quote' ? '<span class="quote-mark">"</span>' : ''}</div>
         <div class="note-footer">
           <span class="note-action-link" onclick="window.app.extractAction('${note.id}')">→ 从此笔记提炼行动点</span>
+          ${(actionsByNoteId[note.id] || []).map(a => {
+            const statusIcon = a.status === 'done' ? '✓ ' : a.status === 'doing' ? '◐ ' : ''
+            return `<span class="note-action-derived" onclick="window.app.jumpToAction('${a.id}')" title="点击跳转到行动看板">${statusIcon}${escapeHtml(a.title)}</span>`
+          }).join('')}
         </div>
       </div>
     `
@@ -759,6 +1054,63 @@ function extractAction(noteId) {
   showActionForm(null, noteId)
 }
 
+// ===== 分类标签拖拽排序 =====
+let categoryDragData = null
+
+function setupCategoryDragDrop() {
+  $$('.category-tag[draggable="true"]').forEach(tag => {
+    tag.addEventListener('dragstart', (e) => {
+      categoryDragData = tag.dataset.category
+      tag.classList.add('category-dragging')
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('text/plain', categoryDragData)
+    })
+
+    tag.addEventListener('dragend', () => {
+      tag.classList.remove('category-dragging')
+      categoryDragData = null
+      $$('.category-tag').forEach(t => t.classList.remove('category-drag-over'))
+    })
+
+    tag.addEventListener('dragover', (e) => {
+      e.preventDefault()
+      if (tag.dataset.category === categoryDragData) return
+      tag.classList.add('category-drag-over')
+      e.dataTransfer.dropEffect = 'move'
+    })
+
+    tag.addEventListener('dragleave', () => {
+      tag.classList.remove('category-drag-over')
+    })
+
+    tag.addEventListener('drop', (e) => {
+      e.preventDefault()
+      tag.classList.remove('category-drag-over')
+      if (!categoryDragData || categoryDragData === tag.dataset.category) return
+
+      const fromId = categoryDragData
+      const toId = tag.dataset.category
+
+      // 获取所有分类并重新排序
+      const categories = getCategories()
+      const fromIndex = categories.findIndex(c => c.id === fromId)
+      const toIndex = categories.findIndex(c => c.id === toId)
+
+      if (fromIndex === -1 || toIndex === -1) return
+
+      // 移动分类
+      const [movedCategory] = categories.splice(fromIndex, 1)
+      categories.splice(toIndex, 0, movedCategory)
+
+      // 更新 sort 字段
+      categories.forEach((c, i) => c.sort = i)
+
+      saveCategories(categories)
+      renderCategoryFilter()
+    })
+  })
+}
+
 // ===== 拖拽更新状态 =====
 function setupDragDrop() {
   $$('.action-column').forEach(col => {
@@ -898,6 +1250,20 @@ function init() {
   $('#btnAddBook').addEventListener('click', () => showBookForm())
   $('#btnAddNote').addEventListener('click', () => showNoteForm())
   $('#btnAddAction').addEventListener('click', () => showActionForm())
+  $('#btnManageCategories').addEventListener('click', showCategoryManageModal)
+
+  // 分类标签栏事件代理
+  $('#categoryBar').addEventListener('click', (e) => {
+    const tag = e.target.closest('.category-tag')
+    if (!tag) return
+    if (tag.dataset.action === 'add') {
+      showCategoryManageModal()
+      setTimeout(() => $('#newCategoryName')?.focus(), 100)
+      return
+    }
+    const key = tag.dataset.category
+    if (key) setCategoryFilter(key)
+  })
 
   // 笔记筛选
   $('#noteFilterBook').addEventListener('change', renderNotes)
@@ -917,6 +1283,7 @@ function init() {
   setupDragDrop()
 
   // 首次渲染
+  renderCategoryFilter()
   renderBooks()
   renderNoteFilters()
   renderNotes()
@@ -931,6 +1298,22 @@ function init() {
 
 // ===== 示例数据 =====
 function seedDemoData() {
+  const categories = [
+    { id: 'cat1', name: '认知思维', description: '提升认知、建立思维模型，看清世界的底牌', sort: 0, createdAt: Date.now() - 86400000 * 10 },
+    { id: 'cat2', name: '逻辑表达', description: '想得清楚、说得明白，把话说得让人一眼看懂', sort: 1, createdAt: Date.now() - 86400000 * 9 },
+    { id: 'cat3', name: '沟通关系', description: '把话说清楚不伤人，经营值得靠近的关系', sort: 2, createdAt: Date.now() - 86400000 * 8 },
+    { id: 'cat4', name: '心理成长', description: '与自己和解，理解自己为什么痛、怕、逃避', sort: 3, createdAt: Date.now() - 86400000 * 7 },
+    { id: 'cat5', name: '写作创作', description: '用文字搭建思想体系，让内容有传播力', sort: 4, createdAt: Date.now() - 86400000 * 6 },
+    { id: 'cat6', name: '财富思维', description: '重新认识钱，让金钱成为工具而非主人', sort: 5, createdAt: Date.now() - 86400000 * 5 },
+    { id: 'cat7', name: '文学励志', description: '在别人的故事里看见自己，活出不一样的人生；也涵盖给疲惫灵魂留一片栖息地的心灵滋养类书', sort: 6, createdAt: Date.now() - 86400000 * 4 },
+    { id: 'cat8', name: '历史人文', description: '往深处看，才能往远处走，太阳底下没有新鲜事', sort: 7, createdAt: Date.now() - 86400000 * 3 }
+  ]
+
+  const catIds = {}
+  categories.forEach(c => catIds[c.name] = c.id)
+
+  saveCategories(categories)
+
   const bookId = genId()
   const noteId1 = genId()
   const noteId2 = genId()
@@ -944,7 +1327,8 @@ function seedDemoData() {
     coverUrl: `${proxyBase}/cover-img?url=${encodeURIComponent('https://img3.doubanio.com/view/subject/l/public/s34937323.jpg')}`,
     totalPages: 320,
     currentPage: 85,
-    createdAt: Date.now() - 86400000 * 3
+    createdAt: Date.now() - 86400000 * 3,
+    categoryId: catIds['认知思维']
   }])
 
   saveNotes([
@@ -979,6 +1363,7 @@ function seedDemoData() {
     completedAt: null
   }])
 
+  renderCategoryFilter()
   renderBooks()
   renderNoteFilters()
   renderNotes()
@@ -996,10 +1381,15 @@ window.app = {
   editAction: (id) => showActionForm(id),
   deleteAction: (id) => deleteAction(id),
   extractAction: (noteId) => extractAction(noteId),
+  jumpToAction: (actionId) => jumpToAction(actionId),
   saveBook,
   saveNote,
   saveAction,
-  closeModal
+  closeModal,
+  manageCategories: showCategoryManageModal,
+  setCategoryFilter,
+  createCategory,
+  deleteCategory
 }
 
 // 启动
