@@ -5,32 +5,21 @@
 
 import { Storage, genId, formatDate } from './storage.js'
 
-// ===== 封面代理服务 URL =====
-// 优先尝试 3001 外网直连，失败后回退到 Vite proxy 相对路径
-function getProxyBase() {
-  const origin = window.location.origin
-  return origin.replace('3000-', '3001-')
-}
-const PROXY_BASE_DIRECT = getProxyBase()
-const PROXY_BASE_FALLBACK = '' // 相对路径，走 Vite proxy
-let proxyBase = PROXY_BASE_DIRECT
-let proxyChecked = false
+// ===== 封面配置 =====
+// 使用 Google Books API 搜索封面（支持跨域）
+// 封面图片使用公共 CORS 代理绕过防盗链
+const CORS_IMAGE_PROXY = 'https://corsproxy.io/?url='
+const GOOGLE_BOOKS_API = 'https://www.googleapis.com/books/v1/volumes'
 
-// 启动时检测 3001 外网端口是否可用，不可用则切换到 Vite proxy
-async function detectProxy() {
-  try {
-    const resp = await fetch(`${PROXY_BASE_DIRECT}/cover-search?q=test`, { method: 'GET', signal: AbortSignal.timeout(5000) })
-    if (resp.ok) {
-      proxyBase = PROXY_BASE_DIRECT
-    } else {
-      proxyBase = PROXY_BASE_FALLBACK
-    }
-  } catch {
-    proxyBase = PROXY_BASE_FALLBACK
+function getCoverImageUrl(url) {
+  if (!url) return null
+  // 如果已经是代理 URL，直接返回
+  if (url.startsWith('http') && (url.includes('corsproxy.io') || url.includes('allorigins'))) {
+    return url
   }
-  proxyChecked = true
+  // 否则使用代理
+  return CORS_IMAGE_PROXY + encodeURIComponent(url)
 }
-detectProxy()
 
 // ===== 数据模型 =====
 // 书籍: { id, title, author, color, coverUrl, totalPages, currentPage, createdAt, categoryId }
@@ -242,8 +231,9 @@ function renderBooks() {
     const progress = book.totalPages > 0
       ? Math.min(100, Math.round((book.currentPage / book.totalPages) * 100))
       : 0
-    const coverStyle = book.coverUrl
-      ? `background-image: url('${escapeHtml(book.coverUrl)}'); background-size: cover; background-position: center top;`
+    const coverImageUrl = book.coverUrl ? getCoverImageUrl(book.coverUrl) : null
+    const coverStyle = coverImageUrl
+      ? `background-image: url('${escapeHtml(coverImageUrl)}'); background-size: cover; background-position: center top;`
       : `background: ${book.color};`
     return `
       <div class="book-card${book.coverUrl ? ' book-card-has-cover' : ''}" data-book-id="${book.id}" style="${coverStyle}" data-fallback-color="${book.color}" data-fallback-char="${book.title.charAt(0) || '?'}" draggable="true">
@@ -337,11 +327,11 @@ function showBookForm(bookId = null) {
       <div class="form-group">
         <label class="form-label">封面图片</label>
         <div class="cover-input-row">
-          <input type="text" class="form-input" id="bookCoverUrl" value="${book ? escapeHtml(book.coverUrl || '') : ''}" placeholder="粘贴封面图片 URL（可选）">
+          <input type="text" class="form-input" id="bookCoverUrl" value="${book ? escapeHtml(book.coverUrl || '') : ''}" placeholder="粘贴封面图片 URL（可选）" onchange="window.app.updateCoverPreview()">
           <button class="btn btn-secondary" type="button" id="btnSearchCover">搜索封面</button>
         </div>
-        <div class="cover-preview" id="coverPreview">${book && book.coverUrl ? `<img src="${escapeHtml(book.coverUrl)}" alt="封面预览" onerror="this.style.display='none'">` : ''}</div>
-        <div class="form-hint">输入书名后点击「搜索封面」可自动获取，或直接粘贴图片 URL</div>
+        <div class="cover-preview" id="coverPreview">${book && book.coverUrl ? `<img src="${escapeHtml(getCoverImageUrl(book.coverUrl))}" alt="封面预览" onerror="this.style.display='none'">` : ''}</div>
+        <div class="form-hint">输入书名后点击「搜索封面」自动查找，或直接粘贴图片 URL</div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -374,11 +364,14 @@ function showBookForm(bookId = null) {
 
   // 搜索封面
   $('#btnSearchCover').addEventListener('click', searchBookCover)
+  // 封面预览更新
+  $('#bookCoverUrl')?.addEventListener('input', updateCoverPreview)
 }
 
-// 搜索书籍封面（通过本地代理使用豆瓣搜索 API）
+// 通过 Google Books API 搜索封面
 async function searchBookCover() {
   const title = $('#bookTitle').value.trim()
+  const author = $('#bookAuthor').value.trim()
   if (!title) {
     showToast('请先输入书名', 'error')
     return
@@ -388,79 +381,87 @@ async function searchBookCover() {
   btn.textContent = '搜索中...'
   btn.disabled = true
 
-  const query = encodeURIComponent(title)
-
-  // 尝试请求，失败则切换到 fallback 重试
-  let resp = null
-  let lastError = null
-  for (const base of [proxyBase, PROXY_BASE_FALLBACK]) {
-    try {
-      resp = await fetch(`${base}/cover-search?q=${query}`)
-      if (resp.ok) {
-        proxyBase = base // 成功了就锁定这个 base
-        break
-      }
-    } catch (e) {
-      lastError = e
-    }
-  }
-
-  if (!resp || !resp.ok) {
-    showToast('搜索失败，请手动粘贴图片 URL', 'error')
-    btn.textContent = '搜索封面'
-    btn.disabled = false
-    return
-  }
-
   try {
+    // 构建查询参数
+    const query = author ? `${title} ${author}` : title
+    const resp = await fetch(`${GOOGLE_BOOKS_API}?q=${encodeURIComponent(query)}&maxResults=6&langRestrict=zh-CN,en`)
+
+    if (!resp.ok) {
+      throw new Error(`搜索失败: ${resp.status}`)
+    }
+
     const data = await resp.json()
 
-    if (data.results && data.results.length > 0) {
+    if (data.items && data.items.length > 0) {
       // 展示多个搜索结果供用户选择
-      const resultsHTML = data.results.slice(0, 6).map((item, idx) => {
-        const fullCoverUrl = `${proxyBase}${item.coverUrl}`
+      const resultsHTML = data.items.slice(0, 6).map(item => {
+        const volumeInfo = item.volumeInfo
+        const coverUrl = volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail
+        if (!coverUrl) return ''
+
+        const displayTitle = volumeInfo.title
+        const displayAuthor = volumeInfo.authors?.join(', ') || '未知作者'
+        const previewUrl = getCoverImageUrl(coverUrl)
+
         return `
-        <div class="cover-search-result" data-cover-url="${escapeHtml(fullCoverUrl)}" data-title="${escapeHtml(item.title)}" data-author="${escapeHtml(item.author)}" style="cursor: pointer;">
-          <img src="${escapeHtml(fullCoverUrl)}" alt="${escapeHtml(item.title)}" onerror="this.parentElement.style.display='none'">
-          <div class="cover-search-info">
-            <div class="cover-search-title">${escapeHtml(item.title)}</div>
-            <div class="cover-search-author">${escapeHtml(item.author)}</div>
+          <div class="cover-search-result" data-cover-url="${escapeHtml(coverUrl)}" data-title="${escapeHtml(displayTitle)}" data-author="${escapeHtml(displayAuthor)}" style="cursor: pointer;">
+            <img src="${escapeHtml(previewUrl)}" alt="${escapeHtml(displayTitle)}" onerror="this.parentElement.style.display='none'">
+            <div class="cover-search-info">
+              <div class="cover-search-title">${escapeHtml(displayTitle)}</div>
+              <div class="cover-search-author">${escapeHtml(displayAuthor)}</div>
+            </div>
           </div>
-        </div>
-      `}).join('')
+        `
+      }).filter(html => html).join('')
 
-      $('#coverPreview').innerHTML = `
-        <div class="cover-search-list">
-          <div class="cover-search-hint">点击选择封面：</div>
-          ${resultsHTML}
-        </div>
-      `
+      if (resultsHTML) {
+        $('#coverPreview').innerHTML = `
+          <div class="cover-search-list">
+            <div class="cover-search-hint">点击选择封面：</div>
+            ${resultsHTML}
+          </div>
+        `
 
-      // 点击选择封面
-      $$('.cover-search-result').forEach(result => {
-        result.addEventListener('click', () => {
-          const coverUrl = result.dataset.coverUrl
-          const resultTitle = result.dataset.title
-          const resultAuthor = result.dataset.author
-          $('#bookCoverUrl').value = coverUrl
-          $('#coverPreview').innerHTML = `<img src="${escapeHtml(coverUrl)}" alt="封面预览" onerror="this.style.display='none'">`
-          // 如果书名或作者为空，自动填充
-          if (!$('#bookTitle').value.trim()) $('#bookTitle').value = resultTitle
-          if (!$('#bookAuthor').value.trim()) $('#bookAuthor').value = resultAuthor
-          showToast('封面已选择', 'success')
+        // 点击选择封面
+        $$('.cover-search-result').forEach(result => {
+          result.addEventListener('click', () => {
+            const coverUrl = result.dataset.coverUrl
+            const resultTitle = result.dataset.title
+            const resultAuthor = result.dataset.author
+            $('#bookCoverUrl').value = coverUrl
+            $('#coverPreview').innerHTML = `<img src="${escapeHtml(getCoverImageUrl(coverUrl))}" alt="封面预览" onerror="this.style.display='none'">`
+            // 如果书名或作者为空，自动填充
+            if (!$('#bookTitle').value.trim()) $('#bookTitle').value = resultTitle
+            if (!$('#bookAuthor').value.trim()) $('#bookAuthor').value = resultAuthor
+            showToast('封面已选择', 'success')
+          })
         })
-      })
 
-      showToast(`找到 ${data.results.length} 个结果，请选择`, 'success')
+        showToast(`找到 ${data.items.length} 个结果，请选择`, 'success')
+      } else {
+        showToast('未找到相关书籍封面', 'error')
+      }
     } else {
       showToast('未找到相关书籍封面', 'error')
     }
   } catch (e) {
+    console.error('搜索封面失败:', e)
     showToast('搜索失败，请手动粘贴图片 URL', 'error')
   }
 
   btn.textContent = '搜索封面'
   btn.disabled = false
+}
+
+function updateCoverPreview() {
+  const url = $('#bookCoverUrl')?.value.trim()
+  const preview = $('#coverPreview')
+  if (!preview) return
+  if (url) {
+    preview.innerHTML = `<img src="${escapeHtml(getCoverImageUrl(url))}" alt="封面预览" onerror="this.style.display='none'">`
+  } else {
+    preview.innerHTML = ''
+  }
 }
 
 function saveBook() {
@@ -1406,7 +1407,7 @@ function seedDemoData() {
     title: '原子习惯',
     author: 'James Clear',
     color: '#4f46e5',
-    coverUrl: `${proxyBase}/cover-img?url=${encodeURIComponent('https://img3.doubanio.com/view/subject/l/public/s34937323.jpg')}`,
+    coverUrl: 'https://img3.doubanio.com/view/subject/l/public/s34937323.jpg',
     totalPages: 320,
     currentPage: 85,
     createdAt: Date.now() - 86400000 * 3,
@@ -1464,6 +1465,7 @@ window.app = {
   deleteAction: (id) => deleteAction(id),
   extractAction: (noteId) => extractAction(noteId),
   jumpToAction: (actionId) => jumpToAction(actionId),
+  updateCoverPreview,
   saveBook,
   saveNote,
   saveAction,
