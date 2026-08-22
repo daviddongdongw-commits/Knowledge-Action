@@ -247,6 +247,16 @@ body {
   transform: translateY(-2px);
 }
 
+.book-dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.book-drag-over {
+  box-shadow: 0 0 0 3px var(--color-primary);
+  transform: scale(1.02);
+}
+
 /* 无封面时的纯色卡片居中显示首字 */
 .book-card:not(.book-card-has-cover) {
   align-items: center;

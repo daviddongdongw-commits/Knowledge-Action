@@ -246,7 +246,7 @@ function renderBooks() {
       ? `background-image: url('${escapeHtml(book.coverUrl)}'); background-size: cover; background-position: center top;`
       : `background: ${book.color};`
     return `
-      <div class="book-card${book.coverUrl ? ' book-card-has-cover' : ''}" data-book-id="${book.id}" style="${coverStyle}" data-fallback-color="${book.color}" data-fallback-char="${book.title.charAt(0) || '?'}">
+      <div class="book-card${book.coverUrl ? ' book-card-has-cover' : ''}" data-book-id="${book.id}" style="${coverStyle}" data-fallback-color="${book.color}" data-fallback-char="${book.title.charAt(0) || '?'}" draggable="true">
         ${!book.coverUrl ? `<span class="book-cover-fallback-char">${book.title.charAt(0) || '?'}</span>` : ''}
         <div class="book-overlay">
           <div class="book-info">
@@ -272,12 +272,17 @@ function renderBooks() {
   // 点击书卡跳转到该书笔记
   $$('.book-card').forEach(card => {
     card.addEventListener('click', () => {
+      // 如果正在拖拽，不执行点击
+      if (card.dataset.isDragging === 'true') return
       const bookId = card.dataset.bookId
       $('#noteFilterBook').value = bookId
       switchView('notes')
       renderNotes()
     })
   })
+
+  // 设置书籍拖拽
+  setupBookDragDrop()
 
   // 封面图片加载失败时回退到纯色+首字
   $$('.book-card-has-cover').forEach(card => {
@@ -1107,6 +1112,83 @@ function setupCategoryDragDrop() {
 
       saveCategories(categories)
       renderCategoryFilter()
+    })
+  })
+}
+
+// ===== 书籍卡片拖拽排序 =====
+let bookDragData = null
+
+function setupBookDragDrop() {
+  $$('.book-card[draggable="true"]').forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+      bookDragData = card.dataset.bookId
+      card.classList.add('book-dragging')
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('text/plain', bookDragData)
+      // 拖拽时阻止点击事件
+      card.dataset.isDragging = 'true'
+    })
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('book-dragging')
+      bookDragData = null
+      $$('.book-card').forEach(c => {
+        c.classList.remove('book-drag-over')
+        delete c.dataset.isDragging
+      })
+    })
+
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault()
+      if (card.dataset.bookId === bookDragData) return
+      card.classList.add('book-drag-over')
+      e.dataTransfer.dropEffect = 'move'
+    })
+
+    card.addEventListener('dragleave', () => {
+      card.classList.remove('book-drag-over')
+    })
+
+    card.addEventListener('drop', (e) => {
+      e.preventDefault()
+      card.classList.remove('book-drag-over')
+      if (!bookDragData || bookDragData === card.dataset.bookId) return
+
+      const fromId = bookDragData
+      const toId = card.dataset.bookId
+
+      // 获取当前筛选条件下的书籍
+      const allBooks = getBooks()
+      const filteredBooks = getFilteredBooks()
+
+      const fromIndex = filteredBooks.findIndex(b => b.id === fromId)
+      const toIndex = filteredBooks.findIndex(b => b.id === toId)
+
+      if (fromIndex === -1 || toIndex === -1) return
+
+      // 在所有书籍数组中找到对应位置并调整排序
+      const fromBook = allBooks.find(b => b.id === fromId)
+      const toBook = allBooks.find(b => b.id === toId)
+
+      if (!fromBook || !toBook) return
+
+      // 在 allBooks 中移动书籍
+      const fromIndexAll = allBooks.findIndex(b => b.id === fromId)
+      allBooks.splice(fromIndexAll, 1)
+
+      // 计算插入位置：如果向左拖，插入到目标位置；向右拖，插入到目标后一个位置
+      const toIndexAll = allBooks.findIndex(b => b.id === toId)
+      if (fromIndex < toIndex) {
+        // 向右拖，插入到目标后
+        allBooks.splice(toIndexAll + 1, 0, fromBook)
+      } else {
+        // 向左拖，插入到目标前
+        allBooks.splice(toIndexAll, 0, fromBook)
+      }
+
+      saveBooks(allBooks)
+      renderBooks()
     })
   })
 }
