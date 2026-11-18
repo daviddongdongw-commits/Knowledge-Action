@@ -27,7 +27,7 @@ async function loadArchiveFile() {
   }
 }
 
-// 把存档内容写入 localStorage（仅在本地为空时使用）
+// 把存档内容写入 localStorage（展示模式下以存档文件为唯一数据源）
 function applyArchiveToLocal(data) {
   Storage.unlock()
   if (Array.isArray(data.categories)) Storage.set('categories', data.categories)
@@ -48,12 +48,11 @@ async function initDataMode() {
   const archiveFlag = localStorage.getItem(ARCHIVE_MODE_KEY) === '1'
   const editUnlocked = localStorage.getItem(EDIT_UNLOCKED_KEY) === '1'
 
-  // 已知是存档展示，且用户没选择编辑
+  // 已知是存档展示，且用户没选择编辑：每次都从 archive.json 重新加载，
+  // 保证老访客也能看到最新一次发布的存档
   if (archiveFlag && !editUnlocked) {
-    if (!hasLocalData()) {
-      const saved = await loadArchiveFile()
-      if (saved) applyArchiveToLocal(saved)
-    }
+    const saved = await loadArchiveFile()
+    if (saved) applyArchiveToLocal(saved)
     Storage.lock()
     archiveMode = true
     return
