@@ -1,0 +1,11 @@
+node_modules/
+logs/
+.psacowork/
+*.log
+*.pid
+.DS_Store
+
+# 本地凭据，绝不提交
+.gh-token
+.env
+.env.*

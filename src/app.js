@@ -382,6 +382,13 @@ function saveBooks(books) {
   return Storage.set('books', books)
 }
 
+// /covers/ 是站点根路径；GitHub Pages 部署在 /仓库名/ 子路径下会 404，
+// 因此渲染时统一转为相对路径 ./covers/...，本地与线上都成立
+function resolveCoverUrl(url) {
+  if (!url) return ''
+  return url.startsWith('/covers/') ? `.${url}` : url
+}
+
 function renderBooks() {
   const books = getFilteredBooks()
   const grid = $('#bookGrid')
@@ -407,8 +414,9 @@ function renderBooks() {
     const progress = book.totalPages > 0
       ? Math.min(100, Math.round((book.currentPage / book.totalPages) * 100))
       : 0
-    const coverStyle = book.coverUrl
-      ? `background-image: url('${escapeHtml(book.coverUrl)}'); background-size: cover; background-position: center top;`
+    const coverUrl = resolveCoverUrl(book.coverUrl)
+    const coverStyle = coverUrl
+      ? `background-image: url('${escapeHtml(coverUrl)}'); background-size: cover; background-position: center top;`
       : `background: ${book.color};`
     return `
       <div class="book-card${book.coverUrl ? ' book-card-has-cover' : ''}" data-book-id="${book.id}" style="${coverStyle}" data-fallback-color="${book.color}" data-fallback-char="${book.title.charAt(0) || '?'}">
@@ -454,10 +462,11 @@ function renderBooks() {
     let triedDirect = false
     img.onerror = () => {
       // 本地封面相对路径加载失败时，尝试 3001 直连（standalone / 静态部署场景）
-      if (!triedDirect && url.startsWith('/covers/') &&
+      if (!triedDirect && url.includes('/covers/') &&
           PROXY_BASE_DIRECT.startsWith('http') && PROXY_BASE_DIRECT !== window.location.origin) {
         triedDirect = true
-        img.src = PROXY_BASE_DIRECT + url
+        const fileName = url.slice(url.indexOf('/covers/') + '/covers/'.length)
+        img.src = `${PROXY_BASE_DIRECT}/covers/${fileName}`
         return
       }
       const color = card.dataset.fallbackColor || '#4f46e5'
@@ -508,7 +517,7 @@ function showBookForm(bookId = null) {
           <input type="text" class="form-input" id="bookCoverUrl" value="${book ? escapeHtml(book.coverUrl || '') : ''}" placeholder="粘贴封面图片 URL（可选）">
           <button class="btn btn-secondary" type="button" id="btnSearchCover">搜索封面</button>
         </div>
-        <div class="cover-preview" id="coverPreview">${book && book.coverUrl ? `<img src="${escapeHtml(book.coverUrl)}" alt="封面预览" onerror="this.style.display='none'">` : ''}</div>
+        <div class="cover-preview" id="coverPreview">${book && book.coverUrl ? `<img src="${escapeHtml(resolveCoverUrl(book.coverUrl))}" alt="封面预览" onerror="this.style.display='none'">` : ''}</div>
         <div class="form-hint">输入书名后点击「搜索封面」可自动获取，或直接粘贴图片 URL</div>
       </div>
       <div class="form-row">
