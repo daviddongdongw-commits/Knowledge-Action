@@ -16,6 +16,14 @@ export default defineConfig({
       '/cover-img': {
         target: 'http://127.0.0.1:3001',
         changeOrigin: true
+      },
+      '/cover-save': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true
+      },
+      '/covers': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true
       }
     }
   },
@@ -32,6 +40,14 @@ export default defineConfig({
         changeOrigin: true
       },
       '/cover-img': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true
+      },
+      '/cover-save': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true
+      },
+      '/covers': {
         target: 'http://127.0.0.1:3001',
         changeOrigin: true
       }
