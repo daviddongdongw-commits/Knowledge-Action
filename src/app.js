@@ -475,10 +475,31 @@ function extractRealImageUrl(coverUrl) {
   return coverUrl
 }
 
+// 线上部署环境（Vercel 等）没有本地落盘能力，封面直接用代理路径
+function isDeployedEnv() {
+  return window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+}
+
 // 把封面图片转存到代理服务的本地 covers/ 目录，返回本地路径；失败则保留原 URL
 async function localizeCover(coverUrl) {
   const realUrl = extractRealImageUrl(coverUrl)
   if (!realUrl || !/^https?:\/\//.test(realUrl)) return coverUrl
+
+  // 线上环境：Serverless /cover-save 返回代理路径（浏览器缓存），不落盘
+  if (isDeployedEnv()) {
+    try {
+      const resp = await fetch('/cover-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: realUrl })
+      })
+      if (resp.ok) {
+        const data = await resp.json()
+        if (data.path) return data.path
+      }
+    } catch (e) { /* 保留原 URL */ }
+    return coverUrl
+  }
 
   for (const base of [proxyBase, PROXY_BASE_FALLBACK]) {
     try {
@@ -508,12 +529,12 @@ async function saveBook() {
   const author = $('#bookAuthor').value.trim()
   let coverUrl = $('#bookCoverUrl').value.trim()
 
-  // 封面转存到本地，避免之后每次都通过代理/豆瓣重新拉取
-  if (coverUrl && !coverUrl.startsWith('/covers/')) {
-    showToast('正在保存封面到本地...', 'info')
+  // 封面转存：本地环境落盘到 covers/，线上环境改为代理路径
+  if (coverUrl && !coverUrl.startsWith('/covers/') && !coverUrl.startsWith('/cover-img')) {
+    showToast(isDeployedEnv() ? '正在处理封面...' : '正在保存封面到本地...', 'info')
     coverUrl = await localizeCover(coverUrl)
-    if (!coverUrl.startsWith('/covers/')) {
-      showToast('封面未能存到本地，已保留原链接', 'error')
+    if (!coverUrl.startsWith('/covers/') && !coverUrl.startsWith('/cover-img')) {
+      showToast('封面未能保存，已保留原链接', 'error')
     }
   }
 

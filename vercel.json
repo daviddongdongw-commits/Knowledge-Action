@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/cover-search", "destination": "/api/cover-search" },
+    { "source": "/cover-img", "destination": "/api/cover-img" },
+    { "source": "/cover-save", "destination": "/api/cover-save" }
+  ]
+}
