@@ -21,10 +21,21 @@ export default defineConfig({
         target: 'http://127.0.0.1:3001',
         changeOrigin: true
       },
+      '/cover-rename': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true
+      },
+      '/archive-save': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true
+      },
       '/covers': {
         target: 'http://127.0.0.1:3001',
         changeOrigin: true
       }
+    },
+    watch: {
+      ignored: ['**/data/**']
     }
   },
   preview: {
@@ -44,6 +55,14 @@ export default defineConfig({
         changeOrigin: true
       },
       '/cover-save': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true
+      },
+      '/cover-rename': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true
+      },
+      '/archive-save': {
         target: 'http://127.0.0.1:3001',
         changeOrigin: true
       },

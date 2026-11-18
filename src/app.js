@@ -5,6 +5,169 @@
 
 import { Storage, genId, formatDate } from './storage.js'
 
+// ===== 存档（只读展示）=====
+const ARCHIVE_FILE = './data/archive.json'
+const ARCHIVE_MODE_KEY = 'zhixing_archive_mode'
+const EDIT_UNLOCKED_KEY = 'zhixing_edit_unlocked'
+
+let archiveMode = false
+let archiveWarned = false
+
+// 读取打包在项目里的存档文件，不存在则返回 null
+async function loadArchiveFile() {
+  try {
+    const resp = await fetch(ARCHIVE_FILE, { cache: 'no-store' })
+    if (!resp.ok) return null
+    const payload = await resp.json()
+    const data = payload && payload.data ? payload.data : payload
+    if (!data || typeof data !== 'object') return null
+    return data
+  } catch (e) {
+    return null
+  }
+}
+
+// 把存档内容写入 localStorage（仅在本地为空时使用）
+function applyArchiveToLocal(data) {
+  Storage.unlock()
+  if (Array.isArray(data.categories)) Storage.set('categories', data.categories)
+  if (Array.isArray(data.books)) Storage.set('books', data.books)
+  if (Array.isArray(data.notes)) Storage.set('notes', data.notes)
+  if (Array.isArray(data.actions)) Storage.set('actions', data.actions)
+}
+
+function hasLocalData() {
+  return getBooks().length > 0 ||
+    getNotes().length > 0 ||
+    getActions().length > 0 ||
+    getCategories().length > 0
+}
+
+// 决定本次运行的运行模式：本地编辑 / 存档只读
+async function initDataMode() {
+  const archiveFlag = localStorage.getItem(ARCHIVE_MODE_KEY) === '1'
+  const editUnlocked = localStorage.getItem(EDIT_UNLOCKED_KEY) === '1'
+
+  // 已知是存档展示，且用户没选择编辑
+  if (archiveFlag && !editUnlocked) {
+    if (!hasLocalData()) {
+      const saved = await loadArchiveFile()
+      if (saved) applyArchiveToLocal(saved)
+    }
+    Storage.lock()
+    archiveMode = true
+    return
+  }
+
+  // 本地已有数据：正常使用，绝不覆盖
+  if (hasLocalData()) return
+
+  // 本地为空：首次访问线上版本，尝试加载存档展示
+  const saved = await loadArchiveFile()
+  if (saved) {
+    applyArchiveToLocal(saved)
+    localStorage.setItem(ARCHIVE_MODE_KEY, '1')
+    Storage.lock()
+    archiveMode = true
+    return
+  }
+
+  // 首次本地使用：种入示例数据
+  seedDemoData()
+}
+
+// 从存档展示切换到编辑模式
+function enterEditMode() {
+  localStorage.setItem(EDIT_UNLOCKED_KEY, '1')
+  Storage.unlock()
+  archiveMode = false
+  renderArchiveState()
+  showToast('已进入编辑模式，修改只保存在当前浏览器', 'success')
+}
+
+// 把当前数据存档到项目的 data/archive.json，供发布到 GitHub 展示
+// 本机运行时可直接写回文件（覆盖旧的）；线上无后端则退回浏览器下载
+async function exportArchive() {
+  const books = getBooks().length
+  const notes = getNotes().length
+  const actions = getActions().length
+  const summary = `${books} 本书、${notes} 条笔记、${actions} 个行动`
+
+  const payload = {
+    version: 1,
+    exportedAt: Date.now(),
+    data: {
+      categories: getCategories(),
+      books: getBooks(),
+      notes: getNotes(),
+      actions: getActions()
+    }
+  }
+  const json = JSON.stringify(payload, null, 2)
+
+  const saved = await saveArchiveToProject(json)
+  if (saved) {
+    showToast(`存档已覆盖保存到 data/archive.json（${summary}）`, 'success')
+    return
+  }
+
+  downloadJson(json, 'archive.json')
+  showToast(`未检测到本地服务，已下载 archive.json（${summary}）`, 'info')
+}
+
+// 调用本机存档服务写入 data/archive.json，失败返回 false
+async function saveArchiveToProject(json) {
+  try {
+    const resp = await fetch('/archive-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: json
+    })
+    if (!resp.ok) return false
+    const info = await resp.json()
+    return Boolean(info && info.ok)
+  } catch (e) {
+    return false
+  }
+}
+
+function downloadJson(json, fileName) {
+  const blob = new Blob([json], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+// 同步存档展示相关的界面状态
+function renderArchiveState() {
+  const badge = $('#archiveBadge')
+  const enterBtn = $('#btnEnterEdit')
+  const exportBtn = $('#btnExportArchive')
+
+  if (badge) badge.hidden = !archiveMode
+  if (enterBtn) enterBtn.hidden = !archiveMode
+  if (exportBtn) exportBtn.hidden = archiveMode
+  document.body.classList.toggle('archive-mode', archiveMode)
+}
+
+// 存档模式下拒绝写入并提示
+function blockedByArchive() {
+  if (Storage.isLocked() || archiveMode) {
+    if (!archiveWarned) {
+      archiveWarned = true
+      showToast('存档展示模式无法修改，可点侧边栏「进入编辑模式」', 'info')
+      setTimeout(() => { archiveWarned = false }, 3000)
+    }
+    return true
+  }
+  return false
+}
+
 // ===== 封面代理服务 URL =====
 // 优先尝试 3001 外网直连，失败后回退到 Vite proxy 相对路径
 function getProxyBase() {
@@ -136,7 +299,8 @@ function getCategories() {
 }
 
 function saveCategories(categories) {
-  Storage.set('categories', categories)
+  if (blockedByArchive()) return false
+  return Storage.set('categories', categories)
 }
 
 function getCategoryById(id) {
@@ -214,7 +378,8 @@ function getBooks() {
 }
 
 function saveBooks(books) {
-  Storage.set('books', books)
+  if (blockedByArchive()) return false
+  return Storage.set('books', books)
 }
 
 function renderBooks() {
@@ -481,7 +646,7 @@ function isDeployedEnv() {
 }
 
 // 把封面图片转存到代理服务的本地 covers/ 目录，返回本地路径；失败则保留原 URL
-async function localizeCover(coverUrl) {
+async function localizeCover(coverUrl, title) {
   const realUrl = extractRealImageUrl(coverUrl)
   if (!realUrl || !/^https?:\/\//.test(realUrl)) return coverUrl
 
@@ -491,7 +656,7 @@ async function localizeCover(coverUrl) {
       const resp = await fetch('/cover-save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: realUrl })
+        body: JSON.stringify({ url: realUrl, title })
       })
       if (resp.ok) {
         const data = await resp.json()
@@ -506,7 +671,7 @@ async function localizeCover(coverUrl) {
       const resp = await fetch(`${base}/cover-save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: realUrl })
+        body: JSON.stringify({ url: realUrl, title })
       })
       if (resp.ok) {
         const data = await resp.json()
@@ -518,6 +683,60 @@ async function localizeCover(coverUrl) {
     } catch (e) { /* 尝试下一个 base */ }
   }
   return coverUrl
+}
+
+// 把本地封面重命名为当前书名（书名修改、或旧版随机名迁移时使用）
+async function renameCoverToTitle(coverUrl, title) {
+  if (!coverUrl || !coverUrl.startsWith('/covers/')) return coverUrl
+  let currentName
+  try {
+    currentName = decodeURIComponent(coverUrl.slice('/covers/'.length))
+  } catch (e) {
+    return coverUrl
+  }
+
+  for (const base of [proxyBase, PROXY_BASE_FALLBACK]) {
+    try {
+      const resp = await fetch(`${base}/cover-rename`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: currentName, title })
+      })
+      if (resp.ok) {
+        const data = await resp.json()
+        if (data.path) {
+          proxyBase = base
+          return data.path
+        }
+      }
+    } catch (e) { /* 尝试下一个 base */ }
+  }
+  return coverUrl
+}
+
+// 启动时把旧版随机文件名的封面统一改为书名，便于日后查找
+async function migrateCoverFileNames() {
+  if (isDeployedEnv()) return
+  if (!proxyChecked) await detectProxy()
+
+  const books = getBooks()
+  const targets = books.filter(b => b.coverUrl && b.coverUrl.startsWith('/covers/'))
+  if (!targets.length) return
+
+  let changed = false
+  for (const book of targets) {
+    const nextUrl = await renameCoverToTitle(book.coverUrl, book.title)
+    if (nextUrl !== book.coverUrl) {
+      book.coverUrl = nextUrl
+      changed = true
+    }
+  }
+
+  if (changed) {
+    saveBooks(books)
+    renderBooks()
+    showToast('封面已按书名整理', 'success')
+  }
 }
 
 async function saveBook() {
@@ -532,10 +751,14 @@ async function saveBook() {
   // 封面转存：本地环境落盘到 covers/，线上环境改为代理路径
   if (coverUrl && !coverUrl.startsWith('/covers/') && !coverUrl.startsWith('/cover-img')) {
     showToast(isDeployedEnv() ? '正在处理封面...' : '正在保存封面到本地...', 'info')
-    coverUrl = await localizeCover(coverUrl)
+    coverUrl = await localizeCover(coverUrl, title)
     if (!coverUrl.startsWith('/covers/') && !coverUrl.startsWith('/cover-img')) {
       showToast('封面未能保存，已保留原链接', 'error')
     }
+  } else if (coverUrl.startsWith('/covers/')) {
+    // 已在本地的封面：书名变化时同步文件名
+    const renamed = await renameCoverToTitle(coverUrl, title)
+    if (renamed !== coverUrl) coverUrl = renamed
   }
 
   const totalPages = parseInt($('#bookTotalPages').value) || 0
@@ -762,7 +985,8 @@ function getNotes() {
 }
 
 function saveNotes(notes) {
-  Storage.set('notes', notes)
+  if (blockedByArchive()) return false
+  return Storage.set('notes', notes)
 }
 
 function renderNoteFilters() {
@@ -931,7 +1155,8 @@ function getActions() {
 }
 
 function saveActions(actions) {
-  Storage.set('actions', actions)
+  if (blockedByArchive()) return false
+  return Storage.set('actions', actions)
 }
 
 function renderActions() {
@@ -1312,7 +1537,7 @@ function escapeHtml(str) {
 }
 
 // ===== 初始化 =====
-function init() {
+async function init() {
   // 导航绑定
   $$('.nav-item').forEach(item => {
     item.addEventListener('click', () => switchView(item.dataset.view))
@@ -1323,6 +1548,10 @@ function init() {
   $('#btnAddNote').addEventListener('click', () => showNoteForm())
   $('#btnAddAction').addEventListener('click', () => showActionForm())
   $('#btnManageCategories').addEventListener('click', showCategoryManageModal)
+
+  // 存档按钮
+  $('#btnExportArchive')?.addEventListener('click', exportArchive)
+  $('#btnEnterEdit')?.addEventListener('click', enterEditMode)
 
   // 分类标签栏事件代理
   $('#categoryBar').addEventListener('click', (e) => {
@@ -1354,6 +1583,9 @@ function init() {
   // 拖拽
   setupDragDrop()
 
+  // 决定运行模式：本地编辑 / 存档只读（需在渲染前完成）
+  await initDataMode()
+
   // 首次渲染
   renderCategoryFilter()
   renderBooks()
@@ -1361,11 +1593,13 @@ function init() {
   renderNotes()
   renderActions()
   renderStatsMini()
+  renderArchiveState()
 
-  // 如果是空数据，插入示例数据
-  if (getBooks().length === 0 && getNotes().length === 0 && getActions().length === 0) {
-    seedDemoData()
-  }
+  const activeNav = document.querySelector('.nav-item.active')
+  if (activeNav && activeNav.dataset.view === 'dashboard') renderDashboard()
+
+  // 把旧版随机文件名的封面整理为书名（存档模式下只读，跳过）
+  if (!archiveMode) migrateCoverFileNames()
 }
 
 // ===== 示例数据 =====
@@ -1461,7 +1695,9 @@ window.app = {
   manageCategories: showCategoryManageModal,
   setCategoryFilter,
   createCategory,
-  deleteCategory
+  deleteCategory,
+  exportArchive,
+  enterEditMode
 }
 
 // 启动

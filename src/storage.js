@@ -5,6 +5,9 @@
 
 const STORAGE_PREFIX = 'zhixing_'
 
+// 存档展示模式下锁定写入，避免访客改动存档数据
+let locked = false
+
 const Storage = {
   // 通用读取
   get(key, defaultValue = []) {
@@ -19,6 +22,7 @@ const Storage = {
 
   // 通用写入
   set(key, value) {
+    if (locked) return false
     try {
       localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value))
       return true
@@ -26,6 +30,19 @@ const Storage = {
       console.error('Storage.set error:', key, e)
       return false
     }
+  },
+
+  // 存档模式：锁定 / 解锁写入
+  lock() {
+    locked = true
+  },
+
+  unlock() {
+    locked = false
+  },
+
+  isLocked() {
+    return locked
   },
 
   // 删除单条

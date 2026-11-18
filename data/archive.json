@@ -1,0 +1,150 @@
+{
+  "version": 1,
+  "exportedAt": 1795001575749,
+  "data": {
+    "categories": [
+      {
+        "id": "cat1",
+        "name": "认知思维",
+        "description": "提升认知、建立思维模型，看清世界的底牌",
+        "sort": 0,
+        "createdAt": 1794107109053
+      },
+      {
+        "id": "cat2",
+        "name": "逻辑表达",
+        "description": "想得清楚、说得明白，把话说得让人一眼看懂",
+        "sort": 1,
+        "createdAt": 1794193509053
+      },
+      {
+        "id": "cat3",
+        "name": "沟通关系",
+        "description": "把话说清楚不伤人，经营值得靠近的关系",
+        "sort": 2,
+        "createdAt": 1794279909053
+      },
+      {
+        "id": "cat4",
+        "name": "心理成长",
+        "description": "与自己和解，理解自己为什么痛、怕、逃避",
+        "sort": 3,
+        "createdAt": 1794366309053
+      },
+      {
+        "id": "cat5",
+        "name": "写作创作",
+        "description": "用文字搭建思想体系，让内容有传播力",
+        "sort": 4,
+        "createdAt": 1794452709053
+      },
+      {
+        "id": "cat6",
+        "name": "财富思维",
+        "description": "重新认识钱，让金钱成为工具而非主人",
+        "sort": 5,
+        "createdAt": 1794539109053
+      },
+      {
+        "id": "cat7",
+        "name": "文学励志",
+        "description": "在别人的故事里看见自己，活出不一样的人生；也涵盖给疲惫灵魂留一片栖息地的心灵滋养类书",
+        "sort": 6,
+        "createdAt": 1794625509053
+      },
+      {
+        "id": "cat8",
+        "name": "历史人文",
+        "description": "往深处看，才能往远处走，太阳底下没有新鲜事",
+        "sort": 7,
+        "createdAt": 1794711909053
+      }
+    ],
+    "books": [
+      {
+        "id": "mwljgbstqj9mbx",
+        "title": "原子习惯",
+        "author": "James Clear",
+        "color": "#4f46e5",
+        "coverUrl": "http://localhost:3000/cover-img?url=https%3A%2F%2Fimg3.doubanio.com%2Fview%2Fsubject%2Fl%2Fpublic%2Fs34937323.jpg",
+        "totalPages": 320,
+        "currentPage": 85,
+        "createdAt": 1794711909053,
+        "categoryId": "cat1"
+      },
+      {
+        "id": "mwljgz769442fi",
+        "title": "非暴力沟通",
+        "author": "[美] 马歇尔·卢森堡",
+        "coverUrl": "/covers/%E9%9D%9E%E6%9A%B4%E5%8A%9B%E6%B2%9F%E9%80%9A.jpg",
+        "color": "#4f46e5",
+        "totalPages": 500,
+        "currentPage": 10,
+        "createdAt": 1794971139378,
+        "categoryId": "cat3"
+      },
+      {
+        "id": "mwllk356kerf6r",
+        "title": "认知觉醒",
+        "author": "周岭",
+        "coverUrl": "/covers/%E8%AE%A4%E7%9F%A5%E8%A7%89%E9%86%92.jpg",
+        "color": "#4f46e5",
+        "totalPages": 0,
+        "currentPage": 0,
+        "createdAt": 1794974643690,
+        "categoryId": null
+      },
+      {
+        "id": "mwlqze9xvo8jh0",
+        "title": "微习惯",
+        "author": "[美]斯蒂芬·盖斯",
+        "coverUrl": "/covers/%E5%BE%AE%E4%B9%A0%E6%83%AF.jpg",
+        "color": "#4f46e5",
+        "totalPages": 0,
+        "currentPage": 0,
+        "createdAt": 1794983756037,
+        "categoryId": "cat1"
+      }
+    ],
+    "notes": [
+      {
+        "id": "mwljgbst345rgp",
+        "bookId": "mwljgbstqj9mbx",
+        "type": "quote",
+        "content": "习惯是自我提高的复利。每天进步 1%，一年后你将进步 37 倍。",
+        "page": 15,
+        "createdAt": 1794798309053
+      },
+      {
+        "id": "mwljgbstezcl4i",
+        "bookId": "mwljgbstqj9mbx",
+        "type": "insight",
+        "content": "不要只关注目标，更要关注体系。目标决定了方向，而体系决定了你能走多远。",
+        "page": 32,
+        "createdAt": 1794884709053
+      },
+      {
+        "id": "mwljjf3i9uvdq4",
+        "bookId": "mwljgz769442fi",
+        "type": "insight",
+        "page": null,
+        "content": "沟通步骤很实用，平时可以多练习",
+        "createdAt": 1794971253294
+      }
+    ],
+    "actions": [
+      {
+        "id": "mwljgbstvrilrx",
+        "title": "每天早起阅读 30 分钟",
+        "description": "利用「习惯叠加」方法：早起刷完牙后立即拿起书本阅读 30 分钟。先从微习惯开始，哪怕只读 2 页也好。",
+        "priority": "high",
+        "status": "doing",
+        "bookId": "mwljgbstqj9mbx",
+        "noteId": "mwljgbst345rgp",
+        "source": "note",
+        "createdAt": 1794884709053,
+        "completedAt": null
+      }
+    ]
+  }
+}
