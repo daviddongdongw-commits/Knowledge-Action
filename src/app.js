@@ -9,6 +9,7 @@ import { Storage, genId, formatDate } from './storage.js'
 const ARCHIVE_FILE = './data/archive.json'
 const ARCHIVE_MODE_KEY = 'zhixing_archive_mode'
 const EDIT_UNLOCKED_KEY = 'zhixing_edit_unlocked'
+const SEEDED_DEMO_KEY = 'zhixing_seeded_demo'
 
 let archiveMode = false
 let archiveWarned = false
@@ -43,6 +44,19 @@ function hasLocalData() {
     getCategories().length > 0
 }
 
+// 本地是否只有首次种入的示例数据（老访客会因此看不到已发布的存档）
+function isSeedOnlyData() {
+  if (localStorage.getItem(SEEDED_DEMO_KEY) === '1') return true
+  // 兼容标记上线前就被种入示例数据的浏览器：按示例数据的特征识别
+  const books = getBooks()
+  return books.length === 1 &&
+    books[0].title === '原子习惯' &&
+    Number(books[0].totalPages) === 320 &&
+    Number(books[0].currentPage) === 85 &&
+    getNotes().length === 2 &&
+    getActions().length === 1
+}
+
 // 决定本次运行的运行模式：本地编辑 / 存档只读
 async function initDataMode() {
   const archiveFlag = localStorage.getItem(ARCHIVE_MODE_KEY) === '1'
@@ -56,6 +70,19 @@ async function initDataMode() {
     Storage.lock()
     archiveMode = true
     return
+  }
+
+  // 本地只有示例数据、且用户从未进入编辑模式：视为空，优先加载已发布的存档
+  if (!editUnlocked && isSeedOnlyData()) {
+    const saved = await loadArchiveFile()
+    if (saved) {
+      applyArchiveToLocal(saved)
+      localStorage.setItem(ARCHIVE_MODE_KEY, '1')
+      localStorage.removeItem(SEEDED_DEMO_KEY)
+      Storage.lock()
+      archiveMode = true
+      return
+    }
   }
 
   // 本地已有数据：正常使用，绝不覆盖
@@ -78,6 +105,7 @@ async function initDataMode() {
 // 从存档展示切换到编辑模式
 function enterEditMode() {
   localStorage.setItem(EDIT_UNLOCKED_KEY, '1')
+  localStorage.removeItem(SEEDED_DEMO_KEY)
   Storage.unlock()
   archiveMode = false
   renderArchiveState()
@@ -1683,6 +1711,8 @@ function seedDemoData() {
   renderNotes()
   renderActions()
   renderStatsMini()
+
+  localStorage.setItem(SEEDED_DEMO_KEY, '1')
 }
 
 // ===== 暴露到全局 =====
