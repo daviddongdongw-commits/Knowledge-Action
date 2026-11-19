@@ -558,6 +558,13 @@ body.archive-mode .category-tag[data-action="add"] {
   background: var(--color-primary-bg);
 }
 
+/* 笔记卡片高亮动画（从行动跳转时） */
+.note-card-highlight {
+  animation: highlight-pulse 1s ease-in-out 2;
+  border-color: var(--color-primary) !important;
+  background: var(--color-primary-bg, rgba(79, 70, 229, 0.08)) !important;
+}
+
 .note-card-actions {
   display: flex;
   gap: 8px;
@@ -727,6 +734,31 @@ body.archive-mode .category-tag[data-action="add"] {
   border-radius: 8px;
   font-size: 10px;
   font-weight: 600;
+}
+
+/* 行动卡片上可点击的来源标签（书名）与笔记链接 */
+.action-source-clickable,
+.action-source-link {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-source-clickable:hover {
+  box-shadow: 0 0 0 1px currentColor inset;
+}
+
+.action-source-link {
+  color: var(--color-text-secondary);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.action-source-link:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
 }
 
 .action-empty-col {

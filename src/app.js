@@ -304,6 +304,42 @@ function jumpToAction(actionId) {
   }, 100)
 }
 
+// 从行动看板跳转到引出该行动的笔记，并高亮目标笔记
+function jumpToNote(noteId) {
+  const note = getNotes().find(n => n.id === noteId)
+  if (!note) {
+    showToast('引出此行动的笔记已被删除', 'error')
+    return
+  }
+  // 先清空按书筛选，否则目标笔记可能被过滤掉导致定位不到
+  $('#noteFilterBook').value = ''
+  switchView('notes')
+  renderNotes()
+  setTimeout(() => {
+    const card = document.querySelector(`.note-card[data-note-id="${noteId}"]`)
+    if (card) {
+      card.classList.add('note-card-highlight')
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setTimeout(() => card.classList.remove('note-card-highlight'), 3000)
+    }
+  }, 100)
+}
+
+// 从行动看板跳转到某本书的笔记列表
+function jumpToBookNotes(bookId) {
+  const book = getBooks().find(b => b.id === bookId)
+  if (!book) {
+    showToast('这本书已被删除', 'error')
+    return
+  }
+  $('#noteFilterBook').value = bookId
+  switchView('notes')
+  renderNotes()
+  if (!getNotes().some(n => n.bookId === bookId)) {
+    showToast(`《${book.title}》还没有笔记`, 'info')
+  }
+}
+
 // ===== Toast 提示 =====
 function showToast(message, type = 'info') {
   const toast = document.createElement('div')
@@ -1277,8 +1313,8 @@ function renderActions() {
       <div class="action-title">${escapeHtml(action.title)}</div>
       ${action.description ? `<div class="action-desc">${escapeHtml(action.description)}</div>` : ''}
       <div class="action-source">
-        ${book ? `<span class="action-source-tag" style="background: ${book.color}20; color: ${book.color}">${escapeHtml(book.title)}</span>` : ''}
-        ${note ? `<span style="color: var(--color-text-muted)">← 笔记</span>` : ''}
+        ${book ? `<span class="action-source-tag action-source-clickable" style="background: ${book.color}20; color: ${book.color}" onclick="window.app.jumpToBookNotes('${book.id}')" title="查看这本书的笔记">${escapeHtml(book.title)}</span>` : ''}
+        ${note ? `<span class="action-source-link" onclick="window.app.jumpToNote('${note.id}')" title="跳转到引出此行动的笔记">← 笔记</span>` : ''}
         <span style="margin-left: auto; color: var(--color-text-muted)">${formatDate(action.createdAt)}</span>
       </div>
     `
@@ -1765,6 +1801,8 @@ window.app = {
   deleteAction: (id) => deleteAction(id),
   extractAction: (noteId) => extractAction(noteId),
   jumpToAction: (actionId) => jumpToAction(actionId),
+  jumpToNote: (noteId) => jumpToNote(noteId),
+  jumpToBookNotes: (bookId) => jumpToBookNotes(bookId),
   saveBook,
   saveNote,
   saveAction,
