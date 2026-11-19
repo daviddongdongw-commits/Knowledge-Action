@@ -319,10 +319,26 @@ function showToast(message, type = 'info') {
 }
 
 // ===== 模态框 =====
+let modalBaseline = ''
+
+// 采集弹窗内所有可填写控件的当前值，用于判断用户是否已输入内容
+function collectModalFormState() {
+  const parts = []
+  document.querySelectorAll('#modalBody input, #modalBody textarea, #modalBody select').forEach(el => {
+    const isCheck = el.type === 'checkbox' || el.type === 'radio'
+    parts.push(el.id || el.name || el.className, isCheck ? String(el.checked) : el.value)
+  })
+  document.querySelectorAll('#modalBody .color-option').forEach(el => {
+    parts.push(el.classList.contains('selected') ? '1' : '0')
+  })
+  return parts.join('\u0001')
+}
+
 function openModal(title, bodyHTML) {
   $('#modalTitle').textContent = title
   $('#modalBody').innerHTML = bodyHTML
   $('#modalOverlay').classList.add('active')
+  modalBaseline = collectModalFormState()
 }
 
 function closeModal() {
@@ -330,6 +346,14 @@ function closeModal() {
   editingBookId = null
   editingNoteId = null
   editingActionId = null
+}
+
+// 用户主动关闭弹窗时调用：已填写内容则先确认，避免误触导致草稿丢失
+function requestCloseModal() {
+  if ($('#modalOverlay').classList.contains('active') && collectModalFormState() !== modalBaseline) {
+    if (!window.confirm('弹窗里填写的内容尚未保存。\n\n确定要关闭吗？点击「取消」可继续填写。')) return
+  }
+  closeModal()
 }
 
 // ===== 分类管理 =====
@@ -576,7 +600,7 @@ function showBookForm(bookId = null) {
         <div class="color-picker" id="colorPicker">${colorOptions}</div>
       </div>
       <div class="form-actions">
-        <button class="btn btn-secondary" onclick="window.app.closeModal()">取消</button>
+        <button class="btn btn-secondary" onclick="window.app.requestCloseModal()">取消</button>
         <button class="btn btn-primary" onclick="window.app.saveBook()">保存</button>
       </div>
     </form>
@@ -1146,7 +1170,7 @@ function showNoteForm(noteId = null, presetBookId = null) {
         <textarea class="form-textarea" id="noteContent" placeholder="记下摘录原文、你的感悟或章节总结..." required>${note ? escapeHtml(note.content) : ''}</textarea>
       </div>
       <div class="form-actions">
-        <button class="btn btn-secondary" onclick="window.app.closeModal()">取消</button>
+        <button class="btn btn-secondary" onclick="window.app.requestCloseModal()">取消</button>
         <button class="btn btn-primary" onclick="window.app.saveNote()">保存</button>
       </div>
     </form>
@@ -1336,7 +1360,7 @@ function showActionForm(actionId = null, presetNoteId = null) {
       </div>
       ${presetNoteId ? `<input type="hidden" id="actionNoteId" value="${presetNoteId}">` : ''}
       <div class="form-actions">
-        <button class="btn btn-secondary" onclick="window.app.closeModal()">取消</button>
+        <button class="btn btn-secondary" onclick="window.app.requestCloseModal()">取消</button>
         <button class="btn btn-primary" onclick="window.app.saveAction()">保存</button>
       </div>
     </form>
@@ -1620,15 +1644,15 @@ async function init() {
   // 笔记筛选
   $('#noteFilterBook').addEventListener('change', renderNotes)
 
-  // 模态框关闭
-  $('#modalClose').addEventListener('click', closeModal)
+  // 模态框关闭：点 ✕、点弹窗外、按 Esc 都先检查有无未保存内容
+  $('#modalClose').addEventListener('click', requestCloseModal)
   $('#modalOverlay').addEventListener('click', (e) => {
-    if (e.target === $('#modalOverlay')) closeModal()
+    if (e.target === $('#modalOverlay')) requestCloseModal()
   })
 
   // ESC 关闭模态框
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal()
+    if (e.key === 'Escape') requestCloseModal()
   })
 
   // 拖拽
@@ -1745,6 +1769,7 @@ window.app = {
   saveNote,
   saveAction,
   closeModal,
+  requestCloseModal,
   manageCategories: showCategoryManageModal,
   setCategoryFilter,
   createCategory,
