@@ -102,6 +102,17 @@ async function initDataMode() {
   seedDemoData()
 }
 
+// 从编辑模式退回存档展示模式，重新加载已发布的存档
+async function exitEditMode() {
+  const confirmed = window.confirm(
+    '退出编辑模式后，页面会重新加载已发布的存档，本浏览器中尚未保存成存档的修改将丢失。\n\n确定退出？'
+  )
+  if (!confirmed) return
+  localStorage.removeItem(EDIT_UNLOCKED_KEY)
+  localStorage.setItem(ARCHIVE_MODE_KEY, '1')
+  location.reload()
+}
+
 // 从存档展示切换到编辑模式
 function enterEditMode() {
   localStorage.setItem(EDIT_UNLOCKED_KEY, '1')
@@ -174,10 +185,13 @@ function downloadJson(json, fileName) {
 function renderArchiveState() {
   const badge = $('#archiveBadge')
   const enterBtn = $('#btnEnterEdit')
+  const exitBtn = $('#btnExitEdit')
   const exportBtn = $('#btnExportArchive')
 
   if (badge) badge.hidden = !archiveMode
   if (enterBtn) enterBtn.hidden = !archiveMode
+  // 只在用户主动进入过编辑模式时，才提供退出入口
+  if (exitBtn) exitBtn.hidden = archiveMode || localStorage.getItem(EDIT_UNLOCKED_KEY) !== '1'
   if (exportBtn) exportBtn.hidden = archiveMode
   document.body.classList.toggle('archive-mode', archiveMode)
 }
@@ -1588,6 +1602,7 @@ async function init() {
   // 存档按钮
   $('#btnExportArchive')?.addEventListener('click', exportArchive)
   $('#btnEnterEdit')?.addEventListener('click', enterEditMode)
+  $('#btnExitEdit')?.addEventListener('click', exitEditMode)
 
   // 分类标签栏事件代理
   $('#categoryBar').addEventListener('click', (e) => {
