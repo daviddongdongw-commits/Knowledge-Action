@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": 1795075133320,
+  "exportedAt": 1795076149828,
   "data": {
     "categories": [
       {
@@ -214,6 +214,17 @@
         "currentPage": 0,
         "createdAt": 1795004761484,
         "categoryId": "cat1"
+      },
+      {
+        "id": "mwn9yu9igdqklu",
+        "title": "非暴力沟通",
+        "author": "[美] 马歇尔·卢森堡",
+        "coverUrl": "/covers/%E9%9D%9E%E6%9A%B4%E5%8A%9B%E6%B2%9F%E9%80%9A.jpg",
+        "color": "#4f46e5",
+        "totalPages": 0,
+        "currentPage": 0,
+        "createdAt": 1795076108982,
+        "categoryId": "cat2"
       }
     ],
     "notes": [],
