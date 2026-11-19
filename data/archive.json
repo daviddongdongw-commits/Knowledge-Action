@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": 1795082396347,
+  "exportedAt": 1795088161322,
   "data": {
     "categories": [
       {
@@ -236,9 +236,42 @@
         "currentPage": 0,
         "createdAt": 1795082384234,
         "categoryId": "cat4"
+      },
+      {
+        "id": "mwngzj9kbi8rk8",
+        "title": "也许你该找个人聊聊",
+        "author": "[美]洛莉·戈特利布",
+        "coverUrl": "/covers/%E4%B9%9F%E8%AE%B8%E4%BD%A0%E8%AF%A5%E6%89%BE%E4%B8%AA%E4%BA%BA%E8%81%8A%E8%81%8A.jpg",
+        "color": "#4f46e5",
+        "totalPages": 0,
+        "currentPage": 0,
+        "createdAt": 1795087898696,
+        "categoryId": "cat4"
       }
     ],
-    "notes": [],
-    "actions": []
+    "notes": [
+      {
+        "id": "mwnh0kzdmeehgx",
+        "bookId": "mwndpca2w6s729",
+        "type": "insight",
+        "page": null,
+        "content": "对于小孩的学习，应该做到课题分离，不要盲目焦虑，不然会适得其反！",
+        "createdAt": 1795087947577
+      }
+    ],
+    "actions": [
+      {
+        "id": "mwnh4ux61y0cca",
+        "title": "调整对小孩学习的态度",
+        "description": "看到小孩拿手机，或者做学习不相干的事情，要跟自己说，学习是孩子自己的事情，是她自己的课题，不是家长的课题。家长做好自己的课题，不要干涉孩子的课题，发下没用的焦虑。",
+        "priority": "medium",
+        "status": "pending",
+        "bookId": "mwndpca2w6s729",
+        "noteId": "mwnh0kzdmeehgx",
+        "source": "note",
+        "createdAt": 1795088147082,
+        "completedAt": null
+      }
+    ]
   }
 }
