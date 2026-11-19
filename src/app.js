@@ -1607,24 +1607,90 @@ function renderDashboard() {
     $('#convDone').style.width = '0%'
   }
 
-  // 书籍阅读进度
+  // 书籍阅读进度（按分类折叠：先看大类合计，点开再看每本书）
   $('#bookProgressList').innerHTML = books.length > 0
-    ? books.map(b => {
-        const progress = b.totalPages > 0
-          ? Math.min(100, Math.round((b.currentPage / b.totalPages) * 100))
-          : 0
-        const color = progress === 100 ? 'var(--color-success)' : progress > 50 ? 'var(--color-primary)' : 'var(--color-warning)'
-        return `
-          <div class="progress-item">
-            <span class="progress-item-name" title="${escapeHtml(b.title)}">${escapeHtml(b.title)}</span>
-            <div class="progress-item-bar">
-              <div class="progress-item-fill" style="width: ${progress}%; background: ${color}"></div>
-            </div>
-            <span class="progress-item-value">${progress}%</span>
-          </div>
-        `
-      }).join('')
+    ? renderBookProgressGroups(books, getCategories())
     : '<div style="color: var(--color-text-muted); text-align: center; padding: 20px;">暂无书籍</div>'
+}
+
+// 记住展开的进度分组，避免每次重新渲染都收起
+const expandedProgressCats = new Set()
+
+function progressColor(progress) {
+  return progress === 100 ? 'var(--color-success)' : progress > 50 ? 'var(--color-primary)' : 'var(--color-warning)'
+}
+
+// 按页数加权计算一组书的总进度；全部未设置页数时返回 null
+function calcGroupProgress(books) {
+  const readable = books.filter(b => b.totalPages > 0)
+  const sumTotal = readable.reduce((s, b) => s + b.totalPages, 0)
+  if (sumTotal === 0) return null
+  const sumRead = readable.reduce((s, b) => s + Math.min(b.currentPage || 0, b.totalPages), 0)
+  return Math.min(100, Math.round(sumRead / sumTotal * 100))
+}
+
+function renderBookProgressGroups(books, categories) {
+  const catMap = {}
+  categories.forEach(c => { catMap[c.id] = c })
+
+  const groups = categories
+    .map(c => ({ key: c.id, name: c.name, color: c.color, books: books.filter(b => b.categoryId === c.id) }))
+    .filter(g => g.books.length > 0)
+
+  const uncategorized = books.filter(b => !b.categoryId || !catMap[b.categoryId])
+  if (uncategorized.length > 0) {
+    groups.push({ key: '__uncategorized', name: '未分类', color: 'var(--color-text-muted)', books: uncategorized })
+  }
+
+  return groups.map(g => {
+    const percent = calcGroupProgress(g.books)
+    const open = expandedProgressCats.has(g.key)
+
+    const rows = g.books.map(b => {
+      const hasPages = b.totalPages > 0
+      const readPages = hasPages ? Math.min(b.currentPage || 0, b.totalPages) : 0
+      const p = hasPages ? Math.min(100, Math.round(readPages / b.totalPages * 100)) : 0
+      return `
+        <div class="progress-item-sub">
+          <span class="progress-item-dot"></span>
+          <span class="progress-item-name" title="${escapeHtml(b.title)}">${escapeHtml(b.title)}</span>
+          <span class="progress-pages">${hasPages ? `${readPages}/${b.totalPages}` : ''}</span>
+          <div class="progress-item-bar">
+            <div class="progress-item-fill" style="width: ${p}%; background: ${hasPages ? progressColor(p) : 'var(--color-border)'}"></div>
+          </div>
+          <span class="progress-item-value">${hasPages ? `${p}%` : '—'}</span>
+        </div>
+      `
+    }).join('')
+
+    return `
+      <div class="progress-group${open ? ' is-open' : ''}" data-cat-key="${escapeHtml(g.key)}">
+        <div class="progress-group-header" onclick="window.app.toggleProgressGroup('${escapeHtml(g.key)}')" title="点击展开 / 收起">
+          <span class="progress-group-arrow">▶</span>
+          <span class="progress-group-name">
+            <span class="progress-group-dot" style="background: ${g.color}"></span>
+            <span class="progress-group-label" title="${escapeHtml(g.name)}">${escapeHtml(g.name)}</span>
+          </span>
+          <span class="progress-group-count">${g.books.length} 本</span>
+          <div class="progress-item-bar">
+            <div class="progress-item-fill" style="width: ${percent ?? 0}%; background: ${percent === null ? 'var(--color-border)' : progressColor(percent)}"></div>
+          </div>
+          <span class="progress-item-value">${percent === null ? '—' : `${percent}%`}</span>
+        </div>
+        <div class="progress-group-body">${rows}</div>
+      </div>
+    `
+  }).join('')
+}
+
+function toggleProgressGroup(catKey) {
+  const el = document.querySelector(`.progress-group[data-cat-key="${catKey}"]`)
+  if (!el) return
+  if (el.classList.toggle('is-open')) {
+    expandedProgressCats.add(catKey)
+  } else {
+    expandedProgressCats.delete(catKey)
+  }
 }
 
 // ===== 侧边栏迷你统计 =====
@@ -1807,6 +1873,7 @@ window.app = {
   jumpToAction: (actionId) => jumpToAction(actionId),
   jumpToNote: (noteId) => jumpToNote(noteId),
   jumpToBookNotes: (bookId) => jumpToBookNotes(bookId),
+  toggleProgressGroup: (catKey) => toggleProgressGroup(catKey),
   saveBook,
   saveNote,
   saveAction,

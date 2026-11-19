@@ -960,6 +960,108 @@ body.archive-mode .category-tag[data-action="add"] {
   color: var(--color-text-muted);
 }
 
+/* ===== 书籍进度：按分类折叠 ===== */
+.progress-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.progress-group-header,
+.progress-item-sub {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 150px) 54px 1fr 44px;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-group-header {
+  cursor: pointer;
+  padding: 5px 8px;
+  margin: 0 -8px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+
+.progress-group-header:hover {
+  background: var(--color-border-light);
+}
+
+.progress-group-arrow {
+  font-size: 9px;
+  line-height: 1;
+  color: var(--color-text-muted);
+  transition: transform 0.18s ease;
+}
+
+.progress-group.is-open .progress-group-arrow {
+  transform: rotate(90deg);
+}
+
+.progress-group-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.progress-group-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.progress-group-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-group-count {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-align: right;
+}
+
+.progress-group-body {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0 4px;
+}
+
+.progress-group.is-open .progress-group-body {
+  display: flex;
+}
+
+.progress-item-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  opacity: 0.45;
+  justify-self: center;
+}
+
+.progress-item-sub .progress-item-name {
+  width: auto;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.progress-pages {
+  font-size: 10.5px;
+  color: var(--color-text-muted);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ===== 模态框 ===== */
 .modal-overlay {
   display: none;
@@ -1702,6 +1804,16 @@ body.archive-mode .category-tag[data-action="add"] {
   .progress-item-name {
     width: 100px;
     font-size: 12px;
+  }
+
+  .progress-group-header,
+  .progress-item-sub {
+    grid-template-columns: 10px minmax(0, 100px) 46px 1fr 40px;
+    gap: 6px;
+  }
+
+  .progress-pages {
+    font-size: 10px;
   }
 
   /* view-header 按钮缩小 */
