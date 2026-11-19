@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": 1795076149828,
+  "exportedAt": 1795082396347,
   "data": {
     "categories": [
       {
@@ -225,6 +225,17 @@
         "currentPage": 0,
         "createdAt": 1795076108982,
         "categoryId": "cat2"
+      },
+      {
+        "id": "mwndpca2w6s729",
+        "title": "被讨厌的勇气",
+        "author": "[日] 岸见一郎",
+        "coverUrl": "/covers/%E8%A2%AB%E8%AE%A8%E5%8E%8C%E7%9A%84%E5%8B%87%E6%B0%94.jpg",
+        "color": "#4f46e5",
+        "totalPages": 0,
+        "currentPage": 0,
+        "createdAt": 1795082384234,
+        "categoryId": "cat4"
       }
     ],
     "notes": [],
