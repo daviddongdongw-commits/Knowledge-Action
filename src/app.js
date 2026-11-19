@@ -1441,11 +1441,13 @@ function saveAction() {
     })
   }
 
+  const wasEditing = !!editingActionId
   saveActions(actions)
   closeModal()
   renderActions()
+  renderNotes()
   renderStatsMini()
-  showToast(editingActionId ? '行动点已更新' : '行动点已创建', 'success')
+  showToast(wasEditing ? '行动点已更新' : '行动点已创建', 'success')
 }
 
 function deleteAction(actionId) {
@@ -1453,6 +1455,7 @@ function deleteAction(actionId) {
   const actions = getActions().filter(a => a.id !== actionId)
   saveActions(actions)
   renderActions()
+  renderNotes()
   renderStatsMini()
   showToast('行动点已删除', 'success')
 }
@@ -1545,6 +1548,7 @@ function setupDragDrop() {
         }
         saveActions(actions)
         renderActions()
+        renderNotes()
         renderStatsMini()
         const statusLabels = { pending: '待执行', doing: '进行中', done: '已完成' }
         showToast(`已移至「${statusLabels[newStatus]}」`, 'success')
