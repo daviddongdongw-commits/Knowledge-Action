@@ -1915,8 +1915,8 @@ async function init() {
   $('#btnEnterEdit')?.addEventListener('click', enterEditMode)
   $('#btnExitEdit')?.addEventListener('click', exitEditMode)
 
-  // 分类标签栏事件代理
-  $('#categoryBar').addEventListener('click', (e) => {
+  // 分类标签事件代理（「全部 / 未分类」在 #fixedTags，其余分类在 #categoryBar）
+  const handleCategoryTagClick = (e) => {
     const tag = e.target.closest('.category-tag')
     if (!tag) return
     if (tag.dataset.action === 'add') {
@@ -1926,7 +1926,10 @@ async function init() {
     }
     const key = tag.dataset.category
     if (key) setCategoryFilter(key)
-  })
+  }
+
+  $('#categoryBar')?.addEventListener('click', handleCategoryTagClick)
+  $('#fixedTags')?.addEventListener('click', handleCategoryTagClick)
 
   // 笔记筛选
   $('#noteFilterBook').addEventListener('change', renderNotes)
