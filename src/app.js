@@ -263,6 +263,9 @@ const PRIORITY_CONFIG = {
   low: { label: '低', class: 'priority-low' }
 }
 
+// 行动打卡格子总数（21 次习惯养成周期）
+const CHECK_TOTAL = 21
+
 // ===== 全局状态 =====
 let currentView = 'books'
 let editingBookId = null
@@ -286,6 +289,7 @@ function switchView(viewName) {
   })
   if (viewName === 'dashboard') renderDashboard()
   if (viewName === 'books') renderCategoryFilter()
+  if (viewName === 'actions') markTruncatedFields()
 }
 
 // 从笔记跳转到行动看板并高亮目标行动卡片
@@ -1296,6 +1300,8 @@ function renderActions() {
     const book = bookMap[action.bookId]
     const note = noteMap[action.noteId]
     const priorityConfig = PRIORITY_CONFIG[action.priority] || PRIORITY_CONFIG.medium
+    const checks = Array.isArray(action.checks) ? action.checks : []
+    const checkCount = checks.filter(Boolean).length
 
     const card = document.createElement('div')
     card.className = 'action-card'
@@ -1310,8 +1316,23 @@ function renderActions() {
           <button class="action-icon-btn" onclick="window.app.deleteAction('${action.id}')" title="删除">🗑</button>
         </div>
       </div>
-      <div class="action-title">${escapeHtml(action.title)}</div>
-      ${action.description ? `<div class="action-desc">${escapeHtml(action.description)}</div>` : ''}
+      <div class="action-field">
+        <div class="action-title">${escapeHtml(action.title)}</div>
+        <div class="action-tip">${escapeHtml(action.title)}</div>
+      </div>
+      ${action.description ? `<div class="action-field">
+        <div class="action-desc">${escapeHtml(action.description)}</div>
+        <div class="action-tip">${escapeHtml(action.description)}</div>
+      </div>` : ''}
+      <div class="action-checks">
+        <div class="check-grid">
+          ${Array.from({ length: CHECK_TOTAL }, (_, i) => {
+            const ts = checks[i]
+            return `<button class="check-box${ts ? ' is-checked' : ''}" onclick="window.app.toggleCheck('${action.id}', ${i})" aria-label="第 ${i + 1} 次打卡" title="第 ${i + 1} 次${ts ? ' · ' + formatDate(ts) : '（未打卡）'}"></button>`
+          }).join('')}
+        </div>
+        <span class="check-count"><b>${checkCount}</b>/${CHECK_TOTAL}</span>
+      </div>
       <div class="action-source">
         ${book ? `<span class="action-source-tag action-source-clickable" style="background: ${book.color}20; color: ${book.color}" onclick="window.app.jumpToBookNotes('${book.id}')" title="查看这本书的笔记">${escapeHtml(book.title)}</span>` : ''}
         ${note ? `<span class="action-source-link" onclick="window.app.jumpToNote('${note.id}')" title="跳转到引出此行动的笔记">← 笔记</span>` : ''}
@@ -1343,6 +1364,18 @@ function renderActions() {
     if (col.count === 0) {
       col.el.innerHTML = '<div class="action-empty-col">暂无行动点</div>'
     }
+  })
+
+  markTruncatedFields()
+}
+
+// 只有真正被截断的标题/描述才启用悬浮全文，避免完整内容也弹一层
+function markTruncatedFields() {
+  document.querySelectorAll('#actionBoard .action-field').forEach(field => {
+    const text = field.querySelector('.action-title, .action-desc')
+    if (!text || !text.offsetParent) return
+    const truncated = text.scrollWidth > text.clientWidth + 1 || text.scrollHeight > text.clientHeight + 1
+    field.classList.toggle('is-truncated', truncated)
   })
 }
 
@@ -1436,6 +1469,7 @@ function saveAction() {
       title, description, priority, status, bookId,
       noteId: noteId || null,
       source: noteId ? 'note' : 'manual',
+      checks: [],
       createdAt: Date.now(),
       completedAt: status === 'done' ? Date.now() : null
     })
@@ -1458,6 +1492,53 @@ function deleteAction(actionId) {
   renderNotes()
   renderStatsMini()
   showToast('行动点已删除', 'success')
+}
+
+// 点打卡格子：独立勾选，并按打卡数自动流转看板状态
+function toggleCheck(actionId, index) {
+  if (blockedByArchive()) return
+  const actions = getActions()
+  const action = actions.find(a => a.id === actionId)
+  if (!action) return
+
+  const checks = Array.isArray(action.checks) ? action.checks.slice() : []
+  while (checks.length < CHECK_TOTAL) checks.push(null)
+
+  // 已勾则取消，未勾则记录当前时间戳
+  checks[index] = checks[index] ? null : Date.now()
+  action.checks = checks
+
+  const count = checks.filter(Boolean).length
+  const prevStatus = action.status
+
+  if (count >= CHECK_TOTAL) {
+    action.status = 'done'
+  } else if (count > 0 && prevStatus === 'pending') {
+    action.status = 'doing'
+  } else if (count === 0 && prevStatus === 'doing') {
+    action.status = 'pending'
+  } else if (count < CHECK_TOTAL && prevStatus === 'done') {
+    action.status = 'doing'
+  }
+
+  if (action.status === 'done' && prevStatus !== 'done') {
+    action.completedAt = Date.now()
+  } else if (action.status !== 'done') {
+    action.completedAt = null
+  }
+
+  saveActions(actions)
+  renderActions()
+  renderNotes()
+  renderStatsMini()
+
+  if (action.status !== prevStatus) {
+    const label = action.status === 'done' ? '已完成' : action.status === 'doing' ? '进行中' : '待执行'
+    const msg = action.status === 'done'
+      ? `21 次打卡完成，已移入「${label}」`
+      : `已移入「${label}」`
+    showToast(msg, 'success')
+  }
 }
 
 function extractAction(noteId) {
@@ -1869,6 +1950,7 @@ window.app = {
   deleteNote: (id) => deleteNote(id),
   editAction: (id) => showActionForm(id),
   deleteAction: (id) => deleteAction(id),
+  toggleCheck: (id, index) => toggleCheck(id, index),
   extractAction: (noteId) => extractAction(noteId),
   jumpToAction: (actionId) => jumpToAction(actionId),
   jumpToNote: (noteId) => jumpToNote(noteId),
