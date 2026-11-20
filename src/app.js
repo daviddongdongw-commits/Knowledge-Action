@@ -1725,8 +1725,11 @@ function renderDashboard() {
 
   const setRate = (sel, val) => {
     const el = $(sel)
+    const isLow = val !== null && val < 50
     el.textContent = val === null ? '—' : `${val}%`
-    el.classList.toggle('is-low', val !== null && val < 50)
+    el.classList.toggle('is-low', isLow)
+    const arrow = el.closest('.chain-arrow')
+    if (arrow) arrow.classList.toggle('is-low', isLow)
   }
   setRate('#chainRateNote', rateNote)
   setRate('#chainRateAction', rateAction)
