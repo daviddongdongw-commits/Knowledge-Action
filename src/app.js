@@ -1639,45 +1639,142 @@ function setupDragDrop() {
 }
 
 // ===== 仪表盘 =====
+// 知行链路的提示文案
+function buildChainHint({ books, notes, actions, done, coveredBooks, rateNote }) {
+  if (books.length === 0) {
+    return '还没有添加书籍。从「书籍」页添加第一本书，开始你的知行之旅。'
+  }
+  if (notes.length === 0) {
+    return `书架上有 ${books.length} 本书，但还没有一条笔记。读完不等于得到，笔记才是一本书真正留下的东西。`
+  }
+  let msg = `${books.length} 本书里只有 ${coveredBooks} 本产出了笔记（${rateNote}%）。`
+  if (actions.length === 0) {
+    msg += ' 还没有把笔记提炼成行动，知识还停在纸上。'
+  } else if (done === 0) {
+    msg += ` ${actions.length} 个行动里还没有完成任何一个。`
+  } else {
+    msg += ` 已经有 ${done} 个行动真正落地了。`
+  }
+  return msg
+}
+
+// 总览页的待办行动（未完成，按打卡进度优先）
+function renderTodoActions(actions, books) {
+  const bookMap = {}
+  books.forEach(b => { bookMap[b.id] = b })
+  const priorityOrder = { high: 0, medium: 1, low: 2 }
+
+  const todo = actions
+    .filter(a => a.status !== 'done')
+    .sort((a, b) => {
+      const ca = (Array.isArray(a.checks) ? a.checks : []).filter(Boolean).length
+      const cb = (Array.isArray(b.checks) ? b.checks : []).filter(Boolean).length
+      if (cb !== ca) return cb - ca
+      const pa = priorityOrder[a.priority] ?? 1
+      const pb = priorityOrder[b.priority] ?? 1
+      if (pa !== pb) return pa - pb
+      return (b.createdAt || 0) - (a.createdAt || 0)
+    })
+    .slice(0, 5)
+
+  if (todo.length === 0) {
+    return actions.length === 0
+      ? '<div class="todo-empty">还没有行动点。在笔记里点「从此笔记提炼行动点」，把想法变成要做的事。</div>'
+      : '<div class="todo-empty">所有行动都完成了，保持住。</div>'
+  }
+
+  return todo.map(a => {
+    const checks = Array.isArray(a.checks) ? a.checks : []
+    const count = checks.filter(Boolean).length
+    const pct = Math.round(count / CHECK_TOTAL * 100)
+    const book = bookMap[a.bookId]
+    return `
+      <div class="todo-item" onclick="window.app.jumpToAction('${a.id}')" title="在行动看板中查看">
+        <span class="todo-dot${a.status === 'doing' ? ' is-doing' : ''}"></span>
+        <span class="todo-title">${escapeHtml(a.title)}</span>
+        ${book ? `<span class="todo-book" style="background: ${book.color}20; color: ${book.color}">${escapeHtml(book.title)}</span>` : ''}
+        <span class="todo-bar"><span class="todo-bar-fill" style="width: ${pct}%"></span></span>
+        <span class="todo-count">${count}/${CHECK_TOTAL}</span>
+      </div>
+    `
+  }).join('')
+}
+
 function renderDashboard() {
   const books = getBooks()
   const notes = getNotes()
   const actions = getActions()
 
+  const pending = actions.filter(a => a.status === 'pending').length
+  const doing = actions.filter(a => a.status === 'doing').length
+  const done = actions.filter(a => a.status === 'done').length
+
+  // 读了（填了当前页）的书，以及产出过笔记的书
+  const reading = books.filter(b => (b.currentPage || 0) > 0).length
+  const coveredBooks = new Set(notes.map(n => n.bookId).filter(Boolean)).size
+
+  const rateNote = books.length > 0 ? Math.round(coveredBooks / books.length * 1000) / 10 : null
+  const rateAction = notes.length > 0 ? Math.round(actions.length / notes.length * 100) : null
+  const rateDone = actions.length > 0 ? Math.round(done / actions.length * 100) : null
+
+  // ===== 知行链路 =====
+  $('#chainBooks').textContent = books.length
+  $('#chainNotes').textContent = notes.length
+  $('#chainActions').textContent = actions.length
+  $('#chainDone').textContent = done
+
+  const setRate = (sel, val) => {
+    const el = $(sel)
+    el.textContent = val === null ? '—' : `${val}%`
+    el.classList.toggle('is-low', val !== null && val < 50)
+  }
+  setRate('#chainRateNote', rateNote)
+  setRate('#chainRateAction', rateAction)
+  setRate('#chainRateDone', rateDone)
+
+  $('#chainHint').textContent = buildChainHint({ books, notes, actions, done, coveredBooks, rateNote })
+
+  // ===== 统计卡 =====
   $('#statBooks').textContent = books.length
   $('#statNotes').textContent = notes.length
   $('#statActions').textContent = actions.length
-  $('#statDone').textContent = actions.filter(a => a.status === 'done').length
+  $('#statRate').textContent = rateDone === null ? '—' : `${rateDone}%`
 
-  // 最近笔记
-  const recentNotes = notes.sort((a, b) => b.createdAt - a.createdAt).slice(0, 5)
+  $('#statBooksSub').innerHTML = `<em>${reading}</em> 本在读 · ${books.length - reading} 未开始`
+  $('#statNotesSub').innerHTML = `覆盖 <em>${coveredBooks}</em> 本书`
+  $('#statActionsSub').innerHTML = `待执行 <em>${pending}</em> · 进行中 ${doing}`
+  $('#statRateSub').innerHTML = `${done}/${actions.length} 已完成`
+
+  // ===== 待办行动 =====
+  $('#todoActions').innerHTML = renderTodoActions(actions, books)
+
+  // ===== 最近笔记（可点击跳转） =====
+  const recentNotes = [...notes].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5)
   const bookMap = {}
   books.forEach(b => { bookMap[b.id] = b })
   $('#recentNotes').innerHTML = recentNotes.length > 0
     ? recentNotes.map(n => {
         const book = bookMap[n.bookId]
+        const preview = n.content.replace(/\s+/g, ' ').slice(0, 60)
         return `
-          <div class="recent-item">
+          <div class="recent-item is-clickable" onclick="window.app.jumpToNote('${n.id}')" title="跳转到这条笔记">
             <span class="recent-item-content">
               ${book ? `<span style="color: ${book.color}; font-weight: 600;">${escapeHtml(book.title)}</span> · ` : ''}
-              ${escapeHtml(n.content.slice(0, 60))}${n.content.length > 60 ? '...' : ''}
+              ${escapeHtml(preview)}${n.content.length > 60 ? '...' : ''}
             </span>
             <span class="recent-item-date">${formatDate(n.createdAt)}</span>
+            <span class="recent-item-go">›</span>
           </div>
         `
       }).join('')
     : '<div class="recent-item" style="color: var(--color-text-muted)">暂无笔记</div>'
 
-  // 行动转化率
-  const pending = actions.filter(a => a.status === 'pending').length
-  const doing = actions.filter(a => a.status === 'doing').length
-  const done = actions.filter(a => a.status === 'done').length
-  const total = actions.length
-
+  // ===== 行动状态分布 =====
   $('#legendPending').textContent = pending
   $('#legendDoing').textContent = doing
   $('#legendDone').textContent = done
 
+  const total = actions.length
   if (total > 0) {
     $('#convPending').style.width = `${(pending / total * 100)}%`
     $('#convDoing').style.width = `${(doing / total * 100)}%`

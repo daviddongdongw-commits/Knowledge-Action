@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <title>知行 · 读书到行动</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="./src/styles.css?v=11" />
+  <link rel="stylesheet" href="./src/styles.css?v=13" />
 </head>
 <body>
   <div id="app">
@@ -111,6 +111,41 @@
         <div class="view-header">
           <h1 class="view-title">知行总览</h1>
         </div>
+        <div class="dashboard-section chain-section">
+          <h2 class="section-title">知行链路</h2>
+          <div class="chain-flow">
+            <div class="chain-node">
+              <div class="chain-num chain-num-book" id="chainBooks">0</div>
+              <div class="chain-label">本书</div>
+            </div>
+            <div class="chain-arrow">
+              <span class="chain-rate" id="chainRateNote">—</span>
+              <span class="chain-arrow-mark">›</span>
+            </div>
+            <div class="chain-node">
+              <div class="chain-num chain-num-note" id="chainNotes">0</div>
+              <div class="chain-label">条笔记</div>
+            </div>
+            <div class="chain-arrow">
+              <span class="chain-rate" id="chainRateAction">—</span>
+              <span class="chain-arrow-mark">›</span>
+            </div>
+            <div class="chain-node">
+              <div class="chain-num chain-num-action" id="chainActions">0</div>
+              <div class="chain-label">个行动</div>
+            </div>
+            <div class="chain-arrow">
+              <span class="chain-rate" id="chainRateDone">—</span>
+              <span class="chain-arrow-mark">›</span>
+            </div>
+            <div class="chain-node">
+              <div class="chain-num chain-num-done" id="chainDone">0</div>
+              <div class="chain-label">已完成</div>
+            </div>
+          </div>
+          <div class="chain-hint" id="chainHint"></div>
+        </div>
+
         <div class="dashboard-grid">
           <div class="stat-card">
             <div class="stat-icon stat-icon-book">
@@ -118,6 +153,7 @@
             </div>
             <div class="stat-value" id="statBooks">0</div>
             <div class="stat-label">书籍</div>
+            <div class="stat-sub" id="statBooksSub"></div>
           </div>
           <div class="stat-card">
             <div class="stat-icon stat-icon-note">
@@ -125,6 +161,7 @@
             </div>
             <div class="stat-value" id="statNotes">0</div>
             <div class="stat-label">笔记</div>
+            <div class="stat-sub" id="statNotesSub"></div>
           </div>
           <div class="stat-card">
             <div class="stat-icon stat-icon-action">
@@ -132,14 +169,21 @@
             </div>
             <div class="stat-value" id="statActions">0</div>
             <div class="stat-label">行动点</div>
+            <div class="stat-sub" id="statActionsSub"></div>
           </div>
           <div class="stat-card">
             <div class="stat-icon stat-icon-done">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
-            <div class="stat-value" id="statDone">0</div>
-            <div class="stat-label">已完成行动</div>
+            <div class="stat-value" id="statRate">0%</div>
+            <div class="stat-label">完成率</div>
+            <div class="stat-sub" id="statRateSub"></div>
           </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h2 class="section-title">待办行动</h2>
+          <div class="todo-list" id="todoActions"></div>
         </div>
 
         <div class="dashboard-section">
@@ -148,7 +192,7 @@
         </div>
 
         <div class="dashboard-section">
-          <h2 class="section-title">行动转化率</h2>
+          <h2 class="section-title">行动状态分布</h2>
           <div class="conversion-chart">
             <div class="conversion-bar">
               <div class="conversion-segment conversion-pending" id="convPending" title="待执行"></div>
@@ -185,6 +229,6 @@
   <!-- Toast 提示 -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script type="module" src="./src/app.js?v=11"></script>
+  <script type="module" src="./src/app.js?v=13"></script>
 </body>
 </html>
